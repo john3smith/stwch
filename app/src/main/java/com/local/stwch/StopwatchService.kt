@@ -58,10 +58,15 @@ class StopwatchService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // All commands, including shortcut actions, are serialized on this main thread.
-        val preliminary = notification()
-        if (Build.VERSION.SDK_INT >= 34) startForeground(ID, preliminary, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        else startForeground(ID, preliminary)
-        WatchCommands.parse(intent?.action)?.let { store.apply(it, WatchCommands.origin(intent)) }
+        ForegroundCommandSequence.run(store.engine, WatchCommands.parse(intent?.action),
+            store.now(), WatchCommands.origin(intent), publish = {
+                val initial = notification()
+                if (Build.VERSION.SDK_INT >= 34) startForeground(ID, initial, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                else startForeground(ID, initial)
+                android.util.Log.d("stwch.FGS", "Initial notification state=${store.engine.state.status}"
+                    + " ongoing=${initial.flags and Notification.FLAG_ONGOING_EVENT != 0}"
+                    + " promoteRequested=${initial.extras.getBoolean("android.requestPromotedOngoing")}")
+            }, persist = { store.save() })
         val status = store.engine.state.status
         if (status == WatchStatus.RUNNING) {
             refreshRunning()
