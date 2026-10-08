@@ -2,6 +2,7 @@ package com.local.stwch
 
 enum class WatchStatus { IDLE, RUNNING, PAUSED }
 enum class WatchAction { START, PAUSE, RESET, LAP, TOGGLE }
+enum class WatchOrigin { APP, ROUTINE }
 data class Stamp(val monotonicMs: Long, val wallMs: Long, val bootId: Int)
 data class Lap(val number: Int, val totalMs: Long, val splitMs: Long)
 data class WatchRecord(val startedWallMs: Long, val stoppedWallMs: Long,
@@ -39,8 +40,16 @@ class StopwatchEngine(initial: WatchSnapshot = WatchSnapshot()) {
         }
     }
 
-    fun apply(action: WatchAction, now: Stamp): Boolean {
+    fun apply(action: WatchAction, now: Stamp, origin: WatchOrigin = WatchOrigin.APP): Boolean {
         restore(now)
+        // Routine buttons have distinct double-press semantics. Completed history is retained,
+        // but replacing a running measurement never creates an automatic lap/history entry.
+        if (origin == WatchOrigin.ROUTINE) {
+            if (action == WatchAction.START && state.status == WatchStatus.RUNNING)
+                state = WatchSnapshot(history = state.history, bootId = now.bootId)
+            if (action == WatchAction.PAUSE && state.status == WatchStatus.PAUSED)
+                return apply(WatchAction.RESET, now)
+        }
         when (action) {
             WatchAction.TOGGLE -> return apply(if (state.status == WatchStatus.RUNNING)
                 WatchAction.PAUSE else WatchAction.START, now)

@@ -1,4 +1,53 @@
-# stwch 1.0.0 검증
+# stwch 1.0.1 검증
+
+검증일: 2026-10-08. 패키지 `com.local.stwch`, versionCode 2.
+
+- `testDebugUnitTest lintDebug assembleDebug`와 `build.ps1` 성공.
+- JUnit 22개 모두 통과: 기존 16개 + 루틴 전용 상태 전이 6개.
+- Lint 오류 0개, 도구/라이브러리 버전 안내 경고 2개, KTX 제안 hint 1개.
+- APK `releases/stwch-v1.0.1-debug.apk`, 2,496,289 bytes.
+- SHA-256 `3dbc949105399836130042dc17821f3b64aa4acf29fc0cd6bfd25be183ab0e1d`.
+- apksigner 검증 성공, v2 서명. 기존 debug 서명 그대로, 설치 데이터 보존.
+- 일반 Android Emulator `emulator-5554`, Android 15/API 35에 최종 APK `install -r` 성공.
+
+## 루틴 변경 및 실측 결과
+
+| 항목 | 결과 |
+|---|---|
+| 실행 중 루틴 START 재호출 | runAt 갱신, 누적시간 0, 현재 중간기록 제거. 자동 최근 기록 추가 없음 |
+| START 연속 6번 | RUNNING 유지, 최근 기록 수 증가 없음, 마지막 명령에서 새 측정 |
+| 일시정지 후 루틴 START | 누적시간과 현재 중간기록 유지하며 재개 |
+| 실행 중 루틴 PAUSE | 일시정지하고 완료 구간 1개 기록 |
+| 일시정지 후 루틴 PAUSE | IDLE/0ms/현재 중간기록 0개, 과거 완료 기록 유지 |
+| APP 출처의 중복 PAUSE | 일시정지 유지, 초기화/중복 기록 없음. 루틴과 분리됨 |
+| 중앙 원 터치 | 기존 시작/일시정지/이어 시작 동작 유지 |
+| 설정 화면에서 단축키 호출 | 같은 Settings Activity와 task 유지, stwch 메인화면으로 이동하지 않음 |
+| 홈 화면에서 호출 | 동일 NexusLauncher Activity/task 유지 |
+| stwch 기록 화면에서 호출 | 동일 HistoryActivity/task 유지. 메인화면으로 돌아가지 않음 |
+| launcher형 NEW_TASK+CLEAR_TASK flags | 위 설정/홈 화면 유지, 완료 후 단축키 Activity 잔존 없음 |
+| 백그라운드/화면 OFF | 서비스 유지, 화면 OFF 3초 이상이 측정시간에 포함됨 |
+| 최종 버전/오류 확인 | 설치 versionName 1.0.1, crash buffer에 stwch 오류 없음 |
+
+시간 검사에는 Android 서비스의 비동기 처리를 고려해 실제 저장 상태 변화를 확인했습니다.
+처음 설치 직후의 고정 500ms 대기는 쓰기 완료 전 상태를 읽을 수 있어 판단 근거로
+사용하지 않았으며, 재검사에서 명령 완료 상태와 기록 수를 확인했습니다.
+
+## 화면 복귀 수정의 범위
+
+기존 단축키 Activity는 standard 실행 모드여서 호출자의 실행 flags/스택 선택에
+의존했습니다. 명령 전용 `singleInstance`/task affinity, 투명한 preview 비활성화,
+처리 후 자기 task 종료를 적용했습니다. 새 intent는 별도로 받아 명령을 처리하며
+메인화면을 여는 코드나 다른 앱의 task를 제거하는 코드는 없습니다.
+
+기존 1.0.0의 화면 복귀 문제를 삼성 루틴+에서 직접 재현하지는 못했습니다.
+일반 에뮬레이터의 단축키 호출/launcher flags를 기준으로 수정 후 화면 유지를
+검증한 것이며, Samsung 앱이 먼저 일반 `앱 열기`를 실행하는 설정이면 해당 앱 열기
+동작은 stwch 단축키에서 취소할 수 없습니다. 루틴의 `앱 바로가기`를 사용하세요.
+실제 Galaxy 루틴+, 잠금 중 OEM 정책, Now bar는 실기기 검증 전입니다.
+
+---
+
+# stwch 1.0.0 이전 검증
 
 검증일: 2026-10-08. 패키지: `com.local.stwch`, versionCode 1.
 

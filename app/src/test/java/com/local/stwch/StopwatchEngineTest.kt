@@ -28,6 +28,48 @@ class StopwatchEngineTest {
         val e=StopwatchEngine();e.apply(WatchAction.START,t(0));e.apply(WatchAction.PAUSE,t(1000))
         assertFalse(e.apply(WatchAction.PAUSE,t(3000)));assertEquals(1,e.state.history.size)
     }
+    @Test fun routineRunningStartDiscardsMeasurementWithoutAutomaticRecord() {
+        val e=StopwatchEngine();e.apply(WatchAction.START,t(0));e.apply(WatchAction.PAUSE,t(500))
+        val completed=e.state.history
+        e.apply(WatchAction.START,t(1000),WatchOrigin.ROUTINE)
+        e.apply(WatchAction.LAP,t(2000))
+        e.apply(WatchAction.START,t(4000),WatchOrigin.ROUTINE)
+        assertEquals(WatchStatus.RUNNING,e.state.status);assertEquals(0,e.elapsed(t(4000)))
+        assertEquals(4000,e.state.runAtMs);assertEquals(t(4000).wallMs,e.state.sessionAtWallMs)
+        assertTrue(e.state.laps.isEmpty());assertEquals(completed,e.state.history)
+    }
+    @Test fun routineRepeatedPauseResetsAndPreservesOnlyCompletedHistory() {
+        val e=StopwatchEngine();e.apply(WatchAction.START,t(0),WatchOrigin.ROUTINE)
+        e.apply(WatchAction.LAP,t(500));e.apply(WatchAction.PAUSE,t(2000),WatchOrigin.ROUTINE)
+        val history=e.state.history
+        e.apply(WatchAction.PAUSE,t(5000),WatchOrigin.ROUTINE)
+        assertEquals(WatchStatus.IDLE,e.state.status);assertEquals(0,e.elapsed(t(7000)))
+        assertTrue(e.state.laps.isEmpty());assertEquals(history,e.state.history)
+    }
+    @Test fun routinePausedStartResumesExistingTimeAndLaps() {
+        val e=StopwatchEngine();e.apply(WatchAction.START,t(0),WatchOrigin.ROUTINE)
+        e.apply(WatchAction.LAP,t(500));e.apply(WatchAction.PAUSE,t(2000),WatchOrigin.ROUTINE)
+        val history=e.state.history;val laps=e.state.laps
+        e.apply(WatchAction.START,t(10000),WatchOrigin.ROUTINE)
+        assertEquals(WatchStatus.RUNNING,e.state.status);assertEquals(3000,e.elapsed(t(11000)))
+        assertEquals(laps,e.state.laps);assertEquals(history,e.state.history)
+    }
+    @Test fun routinePauseWhenIdleDoesNotStartOrCreateRecord() {
+        val e=StopwatchEngine();assertFalse(e.apply(WatchAction.PAUSE,t(1000),WatchOrigin.ROUTINE))
+        assertEquals(WatchStatus.IDLE,e.state.status);assertTrue(e.state.history.isEmpty())
+    }
+    @Test fun routineStartAfterDoublePauseStartsFresh() {
+        val e=StopwatchEngine();e.apply(WatchAction.START,t(0),WatchOrigin.ROUTINE)
+        e.apply(WatchAction.PAUSE,t(1000),WatchOrigin.ROUTINE)
+        e.apply(WatchAction.PAUSE,t(2000),WatchOrigin.ROUTINE)
+        e.apply(WatchAction.START,t(10000),WatchOrigin.ROUTINE)
+        assertEquals(1000,e.elapsed(t(11000)));assertEquals(1,e.state.history.size)
+    }
+    @Test fun rapidRoutineStartPressesNeverCreateIntermediateRecords() {
+        val e=StopwatchEngine()
+        for(i in 0..20)e.apply(WatchAction.START,t(i.toLong()),WatchOrigin.ROUTINE)
+        assertEquals(0,e.elapsed(t(20)));assertTrue(e.state.history.isEmpty());assertTrue(e.state.laps.isEmpty())
+    }
     @Test fun resetRunningRecordsAndClearsLaps() {
         val e=StopwatchEngine();e.apply(WatchAction.START,t(0));e.apply(WatchAction.LAP,t(1500));e.apply(WatchAction.RESET,t(2000))
         assertEquals(WatchStatus.IDLE,e.state.status);assertEquals(0,e.elapsed(t(4000)));assertTrue(e.state.laps.isEmpty())

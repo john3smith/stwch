@@ -24,7 +24,7 @@
     <string name="notification_settings">알림 설정</string>
     <string name="integration">버튼·나우바 설정</string>
     <string name="integration_title">갤럭시와 연결하기</string>
-    <string name="integration_body">측면 버튼: 설정 → 유용한 기능 → 측면 버튼 → 두 번 누르기 → 앱 → stwch. 지원되는 One UI에서는 시작·일시정지·초기화 단축키를 선택할 수 있어요.\n\n기종에 따라 세부 기능 선택이 없으면 앱 아이콘 길게 누르기의 단축키 또는 Good Lock 등에서 앱 바로가기를 선택해 주세요.\n\n나우바: Android 16 이상에서 Live Updates를 요청합니다. 설정 → 잠금화면 및 AOD → Now bar에서 stwch가 지원 목록에 나타나면 켜 주세요. 표시 여부는 One UI·기종·사용자 설정에 따라 달라요. 일반 알림은 Android 8 이상에서 지원합니다.</string>
+    <string name="integration_body">루틴+ 또는 측면 버튼에서 앱 바로가기 → stwch → 시작·일시정지·초기화를 선택해 주세요. 일반 앱 열기는 화면을 여는 기능입니다. 기종·One UI에 따라 앱 바로가기 선택 지원이 다를 수 있어요.\n\n루틴 시작: 실행 중이면 시간·중간기록 초기화 후 새 시작, 일시정지 상태면 이어서 시작.\n루틴 일시정지: 실행 중이면 일시정지, 일시정지 상태면 초기화. 기존 최근 기록은 유지돼요.\n\n나우바: Android 16 이상에서 Live Updates를 요청합니다. 설정 → 잠금화면 및 AOD → Now bar에서 stwch가 지원 목록에 나타나면 켜 주세요. 실제 표시는 One UI·기종·설정에 따라 달라요.</string>
     <string name="live_settings">실시간 알림 설정</string>
     <string name="unsupported_live">이 기기에서는 Android 16 실시간 알림 설정을 지원하지 않습니다.</string>
     <string name="channel_name">스톱워치 상태</string>

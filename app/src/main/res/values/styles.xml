@@ -9,6 +9,8 @@
     </style>
     <style name="AppTheme" parent="AppThemeBase" />
     <style name="ShortcutTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowDisablePreview">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@null</item>

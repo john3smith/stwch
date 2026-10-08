@@ -14,7 +14,8 @@
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
         <activity android:name=".ShortcutActivity" android:exported="true" android:excludeFromRecents="true"
-            android:theme="@style/ShortcutTheme" android:taskAffinity="" />
+            android:theme="@style/ShortcutTheme" android:taskAffinity="com.local.stwch.command"
+            android:launchMode="singleInstance" android:autoRemoveFromRecents="true" />
         <activity android:name=".ShortcutPickerActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.CREATE_SHORTCUT" /></intent-filter>
         </activity>

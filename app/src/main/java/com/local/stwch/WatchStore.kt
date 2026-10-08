@@ -24,8 +24,8 @@ class WatchStore private constructor(context: Context) {
     fun now() = Stamp(SystemClock.elapsedRealtime(), System.currentTimeMillis(),
         Settings.Global.getInt(app.contentResolver, Settings.Global.BOOT_COUNT, -1))
 
-    fun apply(action: WatchAction): Boolean {
-        val changed = engine.apply(action, now())
+    fun apply(action: WatchAction, origin: WatchOrigin = WatchOrigin.APP): Boolean {
+        val changed = engine.apply(action, now(), origin)
         if (changed) save()
         return changed
     }

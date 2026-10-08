@@ -5,16 +5,35 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 
-/** Visible translucent activity grants a legitimate user-initiated FGS entry point. */
+/** Translucent, isolated command task grants a legitimate user-initiated FGS entry point.
+ * It never launches MainActivity or removes the UI/caller task. */
 class ShortcutActivity : Activity() {
-    private var executed = false
+    private val pending = ArrayDeque<Intent>()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (savedInstanceState?.getBoolean("handled") != true) pending.addLast(intent)
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pending.addLast(intent)
+    }
     override fun onResume() {
         super.onResume()
-        if (!executed) {
-            executed = true
-            WatchCommands.parse(intent.action)?.let { WatchCommands.dispatch(this, it) }
-            finish()
+        while (pending.isNotEmpty()) {
+            val command = pending.removeFirst()
+            WatchCommands.parse(command.action)?.let {
+                WatchCommands.dispatch(this, it, WatchCommands.origin(command, WatchOrigin.ROUTINE))
+            }
         }
+        // singleInstance + separate affinity ensure this is only the command's task.
+        if (isTaskRoot) finishAndRemoveTask() else finish()
+        @Suppress("DEPRECATION")
+        overridePendingTransition(0, 0)
+    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("handled", pending.isEmpty())
+        super.onSaveInstanceState(outState)
     }
 }
 

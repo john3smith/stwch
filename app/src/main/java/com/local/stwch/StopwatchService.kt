@@ -10,12 +10,19 @@ import androidx.core.content.ContextCompat
 
 object WatchCommands {
     const val PREFIX = "com.local.stwch."
+    const val EXTRA_ORIGIN = PREFIX + "ORIGIN"
     fun parse(action: String?): WatchAction? = WatchAction.entries.firstOrNull { action == PREFIX + it.name }
-    fun intent(context: Context, action: WatchAction) = Intent(context, ShortcutActivity::class.java).setAction(PREFIX + action.name)
-    fun dispatch(context: Context, action: WatchAction) {
+    fun origin(intent: Intent?, fallback: WatchOrigin = WatchOrigin.APP): WatchOrigin =
+        WatchOrigin.entries.firstOrNull { it.name == intent?.getStringExtra(EXTRA_ORIGIN) } ?: fallback
+    fun intent(context: Context, action: WatchAction, origin: WatchOrigin = WatchOrigin.ROUTINE) =
+        Intent(context, ShortcutActivity::class.java).setAction(PREFIX + action.name)
+            .putExtra(EXTRA_ORIGIN, origin.name)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+    fun dispatch(context: Context, action: WatchAction, origin: WatchOrigin = WatchOrigin.APP) {
         try {
             ContextCompat.startForegroundService(context,
-                Intent(context, StopwatchService::class.java).setAction(PREFIX + action.name))
+                Intent(context, StopwatchService::class.java).setAction(PREFIX + action.name)
+                    .putExtra(EXTRA_ORIGIN, origin.name))
         } catch (_: RuntimeException) { Toast.makeText(context, R.string.service_error, Toast.LENGTH_LONG).show() }
     }
 }
@@ -45,7 +52,7 @@ class StopwatchService : Service() {
         val preliminary = notification()
         if (Build.VERSION.SDK_INT >= 34) startForeground(ID, preliminary, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         else startForeground(ID, preliminary)
-        WatchCommands.parse(intent?.action)?.let { store.apply(it) }
+        WatchCommands.parse(intent?.action)?.let { store.apply(it, WatchCommands.origin(intent)) }
         val status = store.engine.state.status
         if (status == WatchStatus.RUNNING) {
             manager.notify(ID, notification())
@@ -58,7 +65,7 @@ class StopwatchService : Service() {
     }
 
     private fun pending(action: WatchAction) = PendingIntent.getActivity(this, action.ordinal + 1,
-        WatchCommands.intent(this, action), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        WatchCommands.intent(this, action, WatchOrigin.APP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
     private fun notification(): Notification {
         val s = store.engine.state
