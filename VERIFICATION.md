@@ -1,4 +1,31 @@
-# stwch 1.0.2 검증
+# stwch 1.0.3 진행 중 검증 / 배포 보류
+
+검증일: 2026-10-08. versionCode 4. 일반 Android Emulator API 35만 사용.
+
+- Gradle `testDebugUnitTest lintDebug assembleDebug` 성공, JUnit 24개 통과.
+- Lint 오류 0개/기존 안내 경고 2개/hint 1개. Crash buffer에 stwch 오류 없음.
+- 실제 알림: 제목 `스톱워치 일시정지`, 본문/BigText `일시정지 · 00:02`.
+  3초 후에도 00:02 유지, showChronometer=false, 승격 요청 false 확인.
+- API 36 이상 실행 중에만 ProgressStyle(indeterminate)을 적용. 임의 완료 퍼센트 없음.
+  API 36 런타임/실제 Samsung 나우바 표시는 검증하지 못함.
+- 마지막 유효 단축키 action/수신 시각/flags 한 건의 로컬 진단 저장 추가.
+- `NEW_TASK | CLEAR_TASK | TASK_ON_HOME`(0x1000c000)으로 Settings에서 호출하면
+  현재 1.0.2와 수정 중 코드가 모두 NexusLauncher/Home으로 이동하는 것을 재현.
+  이전 검증은 TASK_ON_HOME 옵션이 없어서 이 경우를 놓쳤음.
+- NoDisplay + onCreate 즉시 처리/finish 실험: FGS 시작은 허용됐지만 Home 이동 유지.
+- singleTask에서 HOME 옵션을 제거한 자기 intent로 재호출하는 실험도 Home 이동 유지.
+  실패한 두 실험은 최종 코드에서 모두 되돌렸으며 홈 이동을 해결했다고 보고하지 않음.
+- HOME 옵션 없는 호출은 기존 Settings 화면 유지.
+- 현재 Galaxy의 실제 호출 flags는 확인하지 못했으므로 Samsung 원인 확정이 아님.
+  모델/Android/One UI 버전과 루틴 설정 확인이 필요함.
+- 로컬 APK `releases/stwch-v1.0.3_미완성-debug.apk`, 2,433,493 bytes,
+  SHA-256 `14bd6aa9e2e723e9667eca2121acbb7c1cd3ef4e6937fcee3410adaca1843d0b`.
+  apksigner v2 서명 검증 통과, 데이터 보존 설치 성공.
+- 홈 이동 미해결과 Samsung 검증 부재로 완료 APK Release/Telegram 배포 보류.
+
+---
+
+# stwch 1.0.2 이전 검증
 
 검증일: 2026-10-08. 패키지 `com.local.stwch`, versionCode 3.
 

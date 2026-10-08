@@ -3,6 +3,11 @@
 동글동글한 피치·민트 디자인의 Android 스톱워치. Kotlin 네이티브 UI, 로컬 저장,
 백그라운드 알림, 세 가지 앱 단축키를 제공합니다. 서버·계정·인터넷 권한이 없습니다.
 
+> **진행 중 1.0.3 / 배포 보류:** 일시정지 알림 표시 수정과 Android 16
+> ProgressStyle 호환 변경은 구현했습니다. `TASK_ON_HOME` 호출 시 홈 복귀를
+> 에뮬레이터에서 재현했으나 해결하지 못했습니다. 실제 Galaxy 모델/One UI,
+> 루틴 호출 설정 확인이 필요합니다. 완료 APK로 배포하지 않습니다.
+
 ## 사용하기
 
 - 중앙 원 터치: 시작 → 일시정지 → 이어서 시작.
@@ -20,6 +25,8 @@
 - 알림 권한을 허용하면 실행 중 시스템 Chronometer, `현재 시간 MM:SS`
   (1시간 이상은 `H:MM:SS`)과 일시정지·초기화 버튼이 표시됩니다. 알림에는
   중간기록 개수를 표시하지 않습니다. 알림 본문은 측정시간 기준 초 경계마다 갱신합니다.
+  일시정지하면 제목은 `스톱워치 일시정지`, 본문은 `일시정지 · MM:SS`로 바뀌며
+  Chronometer와 본문 갱신이 멈춥니다. 재개 버튼은 `이어서 시작`입니다.
   일시정지 상태에서는 일반 알림으로 남고 초기화하면 알림이 사라집니다.
 
 루틴 옵션과 앱/알림 버튼의 명령 경로를 분리했습니다. 중앙 원은 항상 시작/일시정지/
@@ -60,6 +67,17 @@ affinity가 없는 `standard` 투명 Activity에서 명령을 처리한 후 **Ac
 같은 단축키 ID와 클래스명을 유지하므로 저장된 매핑과 호환됩니다.
 다만 삼성 루틴 UI가 내부적으로 수행하는 화면 전환까지 앱에서 제어할 수는 없습니다.
 
+`NEW_TASK | CLEAR_TASK | TASK_ON_HOME`(`0x1000c000`) 호출은 1.0.2/현재 코드 모두
+이전 Settings 화면에서 Home으로 이동했습니다. `TASK_ON_HOME`은 호출자가 Android에
+홈 복귀를 요청하는 옵션입니다. NoDisplay/즉시 종료 또는 자신의 task를 재호출해서
+옵션을 제거하는 실험도 이 이동을 해결하지 못해 최종 코드에 포함하지 않았습니다.
+일반 `NEW_TASK | CLEAR_TASK`만 사용하는 경우 기존 화면은 유지됩니다. 이 재현이
+실제 Galaxy의 호출 옵션을 확인한 것은 아닙니다. 마지막 유효 루틴 명령/시각/flags
+한 건만 앱 내부에 기록해 나우바 진단 화면에서 표시합니다. 호출자 앱 이름,
+전체 URL, 화면 내용과 앱 사용 이력은 수집하지 않습니다.
+
+- [Android TASK_ON_HOME 정의](https://developer.android.com/reference/android/content/Intent#FLAG_ACTIVITY_TASK_ON_HOME)
+
 - [삼성 측면 버튼 안내](https://www.samsung.com/sg/support/mobile-devices/how-to-customise-the-side-button-with-new-features-on-your-galaxy-phone-and-tablet/)
 - [Android 앱 단축키](https://developer.android.com/develop/ui/compose/system/shortcuts/creating-shortcuts)
 
@@ -70,6 +88,12 @@ AndroidX Core 1.17.0의 `setRequestPromotedOngoing(true)`와 시스템 Chronomet
 표준 ongoing 알림을 사용합니다. 커스텀 RemoteViews, 가짜 미디어 세션,
 비공개 삼성 API는 사용하지 않습니다. Android 16(API 36) 이상 지원 기기는
 앱의 `버튼·나우바 설정 → 실시간 알림 설정`에서 표시 허용을 확인할 수 있습니다.
+
+진행 중 1.0.3에서는 API 36 이상 실행 중 알림에 공개 `ProgressStyle`의
+indeterminate 표현을 사용합니다. 종료 시점이 정해지지 않은 스톱워치에 임의의
+완료 퍼센트를 만들어 넣지 않습니다. API 35 이하와 일시정지는 `BigTextStyle`을
+사용합니다. 공개 API 컴파일과 API 35 실행만 검증했으며, 실제 One UI 호환 문제를
+해결했다는 증거는 아닙니다. 기기 버전 및 표시 허용 상태 확인이 필요합니다.
 
 1.0.2의 **나우바 진단** 버튼은 기기 모델/Android 버전, 알림 허용, 채널 상태,
 진행 상태를 표시합니다. API 36 이상에서는 실제 게시된 알림을 읽어
@@ -121,7 +145,9 @@ AndroidX Core 1.17.0의 `setRequestPromotedOngoing(true)`와 시스템 Chronomet
 ./gradlew.bat testDebugUnitTest lintDebug assembleDebug
 ```
 
-배포 APK: `releases/stwch-v1.0.2-debug.apk`. 개인 테스트용 debug 서명이며
+기존 배포 APK: `releases/stwch-v1.0.2-debug.apk`.
+진행 중 로컬 APK: `releases/stwch-v1.0.3_미완성-debug.apk` (Release/Telegram 배포 보류).
+개인 테스트용 debug 서명이며
 공개 스토어 배포 전에는 별도 보호된 운영키와 foreground-service 정책 검토가 필요합니다.
 API 36 빌드는 나우바 지원 조건을 구현하지만 실제 갤럭시 표시를 보장하지 않습니다.
 

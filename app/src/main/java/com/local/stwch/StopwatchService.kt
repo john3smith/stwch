@@ -96,7 +96,8 @@ class StopwatchService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stopwatch).setContentIntent(content)
             .setContentTitle(getString(if (running) R.string.notification_running else R.string.notification_paused))
-            .setContentText(getString(R.string.notification_time, NotificationTime.text(elapsed)))
+            .setContentText(getString(if (running) R.string.notification_time else R.string.notification_paused_time,
+                NotificationTime.text(elapsed)))
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH).setOnlyAlertOnce(true)
             .setOngoing(running).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setColor(android.graphics.Color.rgb(236,118,94))
@@ -106,6 +107,17 @@ class StopwatchService : Service() {
             .addAction(R.drawable.ic_stopwatch, getString(if (running) R.string.pause else R.string.resume),
                 pending(if (running) WatchAction.PAUSE else WatchAction.START))
             .addAction(R.drawable.ic_stopwatch, getString(R.string.reset), pending(WatchAction.RESET))
+        // A stopwatch has no predetermined finish percentage. Android 16's
+        // public live-update style represents an active session without inventing
+        // a percent or using Samsung's private notification/media APIs.
+        if (running && Build.VERSION.SDK_INT >= 36) {
+            builder.setStyle(NotificationCompat.ProgressStyle().setProgressIndeterminate(true))
+        } else {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(getString(
+                if (running) R.string.notification_time else R.string.notification_paused_time,
+                NotificationTime.text(elapsed))))
+        }
+        if (!running) builder.setShortCriticalText(getString(R.string.pause))
         return builder.build()
     }
 

@@ -23,6 +23,7 @@ class ShortcutActivity : Activity() {
         while (pending.isNotEmpty()) {
             val command = pending.removeFirst()
             WatchCommands.parse(command.action)?.let {
+                CommandDiagnostics.record(this, it, command)
                 WatchCommands.dispatch(this, it, WatchCommands.origin(command, WatchOrigin.ROUTINE))
             }
         }

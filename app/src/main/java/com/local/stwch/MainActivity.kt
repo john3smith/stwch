@@ -141,7 +141,7 @@ class MainActivity : Activity() {
                 WatchStatus.PAUSED -> R.string.paused
                 WatchStatus.IDLE -> R.string.ready
             }), detail)
-        AlertDialog.Builder(this).setTitle(R.string.live_diagnostics).setMessage(text)
+        AlertDialog.Builder(this).setTitle(R.string.live_diagnostics).setMessage(text + "\n\n" + CommandDiagnostics.describe(this))
             .setPositiveButton(R.string.notification_settings) { _, _ ->
                 startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
             }.setNeutralButton(R.string.live_settings) { _, _ ->
