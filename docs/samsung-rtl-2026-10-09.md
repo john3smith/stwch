@@ -78,3 +78,23 @@ show stwch. App notification settings still did not offer its Samsung live
 notification switch. These unsupported hints and metadata were reverted, and the
 unchanged original 1.0.5 APK restored. This strengthens the distinction between
 creating OEM presentation data and being admitted for actual display.
+
+## Approved developer-option follow-up
+
+The user approved enabling the all-app live-notification option only on the RTL
+test device, if normally accessible, without bypassing device-management policy.
+The same ADB device remained connected. Opened About phone / Software information
+through normal Settings UI and tried the observed Build number row. Repeated taps
+did not enable developer settings (`development_settings_enabled` stayed null).
+Opening `android.settings.APPLICATION_DEVELOPMENT_SETTINGS` returned to the
+Samsung launcher instead of a developer settings screen. No PIN/password prompt
+was encountered or automated. These observations establish that the attempted
+normal Settings path is unavailable, not its exact management-policy cause.
+
+No secure/global settings write, Binder setter, support-list change, or developer
+override was applied. The all-app option is **not enabled** and rendering under
+that option remains untested. The signed-in RTL Web Client has its own Developer
+Options entry, but neither current Playwright nor Chrome DevTools browser bindings
+exposed that existing session (only separate about:blank pages). A user opening
+that official client panel can reveal whether RTL offers a supported enable path;
+do not infer that it does or force the device's disabled Settings path.
