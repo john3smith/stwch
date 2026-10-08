@@ -48,7 +48,7 @@ its existence in implementation is not proof that managed RTL settings permit it
 ## Safety and remaining work
 
 No support-list changes, device-policy changes, developer override, package
-impersonation, private notification extras, hidden API calls in the app, root,
+impersonation, retained private notification extras, hidden API calls in the app, root,
 fake media session, or system modification was made. Downloaded inspection tools
 were from jadx's official release, with SHA-256 checked against GitHub's digest;
 device binaries/decompiled output stay in ignored local verification files.
@@ -66,3 +66,15 @@ References:
 - https://www.samsung.com/us/support/answer/ANS10002524/
 
 The Android guide explicitly permits additional OEM eligibility criteria.
+
+## Additional isolated compatibility experiment
+
+After the initial report, tested Samsung's ongoing-activity manifest metadata
+and five Bundle hints verified in this device's framework: style=1, primary and
+secondary text, and Now bar primary and secondary text. No permissions, support
+lists or system settings were changed. This created stwch OA data, but SystemUI
+placed it in **Hidden list / promoted:false**; actual lock screen still did not
+show stwch. App notification settings still did not offer its Samsung live
+notification switch. These unsupported hints and metadata were reverted, and the
+unchanged original 1.0.5 APK restored. This strengthens the distinction between
+creating OEM presentation data and being admitted for actual display.
