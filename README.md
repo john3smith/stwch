@@ -83,6 +83,13 @@ affinity가 없는 `standard` 투명 Activity에서 명령을 처리한 후 **Ac
 
 ## 나우바 / Live Updates
 
+2026-10-08 삼성 Remote Test Lab의 SM-S731N(Android 16 / One UI 8.5)에서
+실제 설치·실행하여 확인했습니다. 알림 권한, 잠금화면 표시, 승격 가능 조건 및
+실제 `FLAG_PROMOTED_ONGOING`은 모두 허용/참이었지만 잠금화면 Now bar에
+stwch는 나타나지 않았습니다. **시스템 승격 성공을 Now bar 표시 성공으로
+간주하지 않습니다.** 자세한 실기기 관찰과 실패한 실험은
+[Samsung RTL 검증 기록](docs/samsung-rtl-2026-10-08.md)에 정리했습니다.
+
 AndroidX Core 1.17.0의 `setRequestPromotedOngoing(true)`와 시스템 Chronometer를
 사용합니다. Manifest에 `POST_PROMOTED_NOTIFICATIONS`를 선언하고, 실행 중에는
 표준 ongoing 알림을 사용합니다. 커스텀 RemoteViews, 가짜 미디어 세션,
