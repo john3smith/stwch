@@ -30,8 +30,16 @@ object WatchCommands {
 class StopwatchService : Service() {
     private lateinit var store: WatchStore
     private lateinit var manager: NotificationManager
+    private val handler = Handler(Looper.getMainLooper())
+    private val ticker = object : Runnable {
+        override fun run() {
+            if (store.engine.state.status != WatchStatus.RUNNING) return
+            manager.notify(ID, notification())
+            handler.postDelayed(this, NotificationTime.nextRefreshDelay(store.engine.elapsed(store.now())))
+        }
+    }
     private val timeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) { manager.notify(ID, notification()) }
+        override fun onReceive(context: Context?, intent: Intent?) { refreshRunning() }
     }
     override fun onCreate() {
         super.onCreate()
@@ -44,6 +52,7 @@ class StopwatchService : Service() {
         })
         ContextCompat.registerReceiver(this, timeReceiver, IntentFilter().apply {
             addAction(Intent.ACTION_TIME_CHANGED); addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            addAction(Intent.ACTION_SCREEN_ON)
         }, ContextCompat.RECEIVER_NOT_EXPORTED)
     }
 
@@ -55,17 +64,27 @@ class StopwatchService : Service() {
         WatchCommands.parse(intent?.action)?.let { store.apply(it, WatchCommands.origin(intent)) }
         val status = store.engine.state.status
         if (status == WatchStatus.RUNNING) {
-            manager.notify(ID, notification())
+            refreshRunning()
             return START_STICKY
         }
+        handler.removeCallbacks(ticker)
         stopForeground(if (status == WatchStatus.IDLE) STOP_FOREGROUND_REMOVE else STOP_FOREGROUND_DETACH)
         if (status == WatchStatus.IDLE) manager.cancel(ID) else manager.notify(ID, notification())
         stopSelf(startId)
         return START_NOT_STICKY
     }
 
-    private fun pending(action: WatchAction) = PendingIntent.getActivity(this, action.ordinal + 1,
-        WatchCommands.intent(this, action, WatchOrigin.APP), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+    private fun refreshRunning() {
+        handler.removeCallbacks(ticker)
+        if (store.engine.state.status == WatchStatus.RUNNING) ticker.run()
+    }
+
+    // A notification action is itself a documented user-initiated FGS entry.
+    // Do not start a translucent command Activity or change tasks for these buttons.
+    private fun pending(action: WatchAction) = PendingIntent.getForegroundService(this, action.ordinal + 1,
+        Intent(this, StopwatchService::class.java).setAction(WatchCommands.PREFIX + action.name)
+            .putExtra(WatchCommands.EXTRA_ORIGIN, WatchOrigin.APP.name),
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
     private fun notification(): Notification {
         val s = store.engine.state
@@ -77,8 +96,7 @@ class StopwatchService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stopwatch).setContentIntent(content)
             .setContentTitle(getString(if (running) R.string.notification_running else R.string.notification_paused))
-            .setContentText(if (running) getString(R.string.notification_running_text, s.laps.size)
-                else getString(R.string.notification_text, WatchFormat.time(elapsed, false), s.laps.size))
+            .setContentText(getString(R.string.notification_time, NotificationTime.text(elapsed)))
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH).setOnlyAlertOnce(true)
             .setOngoing(running).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setColor(android.graphics.Color.rgb(236,118,94))
@@ -88,11 +106,13 @@ class StopwatchService : Service() {
             .addAction(R.drawable.ic_stopwatch, getString(if (running) R.string.pause else R.string.resume),
                 pending(if (running) WatchAction.PAUSE else WatchAction.START))
             .addAction(R.drawable.ic_stopwatch, getString(R.string.reset), pending(WatchAction.RESET))
-        if (!running) builder.setShortCriticalText(getString(R.string.pause))
         return builder.build()
     }
 
-    override fun onDestroy() { unregisterReceiver(timeReceiver); store.save(); super.onDestroy() }
+    override fun onDestroy() {
+        handler.removeCallbacks(ticker)
+        unregisterReceiver(timeReceiver); store.save(); super.onDestroy()
+    }
     override fun onBind(intent: Intent?): IBinder? = null
     companion object { const val CHANNEL = "stopwatch_status"; const val ID = 41 }
 }

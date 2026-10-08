@@ -14,8 +14,8 @@
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
         <activity android:name=".ShortcutActivity" android:exported="true" android:excludeFromRecents="true"
-            android:theme="@style/ShortcutTheme" android:taskAffinity="com.local.stwch.command"
-            android:launchMode="singleInstance" android:autoRemoveFromRecents="true" />
+            android:theme="@style/ShortcutTheme" android:taskAffinity=""
+            android:launchMode="standard" android:noHistory="true" />
         <activity android:name=".ShortcutPickerActivity" android:exported="true">
             <intent-filter><action android:name="android.intent.action.CREATE_SHORTCUT" /></intent-filter>
         </activity>
@@ -23,7 +23,7 @@
         <service android:name=".StopwatchService" android:exported="false"
             android:foregroundServiceType="specialUse" android:stopWithTask="false">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-initiated stopwatch with persistent elapsed-time notification and pause/reset controls; no background polling or wake lock." />
+                android:value="User-initiated stopwatch with elapsed-time notification and pause/reset controls; text refreshed at most once per second, no network polling or wake lock." />
         </service>
     </application>
 </manifest>

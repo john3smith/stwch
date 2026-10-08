@@ -17,7 +17,9 @@
 - 기록: 중지한 구간의 시작·중지 시각, 구간 측정시간과 누적시간을 최신순으로 20개.
   일시정지 또는 실행 중 초기화 시 이전 구간을 저장합니다. 루틴의 중복 시작으로
   버린 구간은 저장하지 않습니다. 이미 일시정지한 상태에서 초기화해도 동일 기록을 다시 저장하지 않습니다.
-- 알림 권한을 허용하면 실행 중 시스템 Chronometer와 일시정지·초기화 버튼이 표시됩니다.
+- 알림 권한을 허용하면 실행 중 시스템 Chronometer, `현재 시간 MM:SS`
+  (1시간 이상은 `H:MM:SS`)과 일시정지·초기화 버튼이 표시됩니다. 알림에는
+  중간기록 개수를 표시하지 않습니다. 알림 본문은 측정시간 기준 초 경계마다 갱신합니다.
   일시정지 상태에서는 일반 알림으로 남고 초기화하면 알림이 사라집니다.
 
 루틴 옵션과 앱/알림 버튼의 명령 경로를 분리했습니다. 중앙 원은 항상 시작/일시정지/
@@ -49,10 +51,13 @@
 
 루틴+ 등에서는 **앱 바로가기 → stwch → 시작/일시정지/초기화**를 선택해야 합니다.
 일반 `앱 열기 → stwch`는 화면을 여는 동작으로, 위 세 명령과 다릅니다.
-단축키 처리 Activity는 `singleInstance`와 전용 task affinity로 UI/호출자 스택에서
-분리했고 처리 후 자기 작업만 종료합니다. 메인화면을 명시적으로 열거나 호출자의
-화면을 닫지 않습니다. 기본 launcher 실행은 기존처럼 앱 UI를 엽니다.
-1.0.1에서도 같은 단축키 ID와 클래스명을 유지하므로 저장된 매핑과 호환됩니다.
+1.0.1의 `singleInstance`/전용 task 제거 방식을 폐기했습니다. 1.0.2에서는
+affinity가 없는 `standard` 투명 Activity에서 명령을 처리한 후 **Activity만 `finish()`** 합니다.
+`finishAndRemoveTask`, `finishAffinity`, `moveTaskToBack`이나 HOME intent를 사용하지
+않으며 메인화면을 열지 않습니다. 서비스 시작은 Activity가 resume된 뒤 수행해
+최신 Android의 사용자 시작 Foreground Service 정책을 지킵니다.
+알림 명령 버튼은 `PendingIntent.getForegroundService`를 사용해 Activity를 전혀 열지 않습니다.
+같은 단축키 ID와 클래스명을 유지하므로 저장된 매핑과 호환됩니다.
 다만 삼성 루틴 UI가 내부적으로 수행하는 화면 전환까지 앱에서 제어할 수는 없습니다.
 
 - [삼성 측면 버튼 안내](https://www.samsung.com/sg/support/mobile-devices/how-to-customise-the-side-button-with-new-features-on-your-galaxy-phone-and-tablet/)
@@ -66,6 +71,14 @@ AndroidX Core 1.17.0의 `setRequestPromotedOngoing(true)`와 시스템 Chronomet
 비공개 삼성 API는 사용하지 않습니다. Android 16(API 36) 이상 지원 기기는
 앱의 `버튼·나우바 설정 → 실시간 알림 설정`에서 표시 허용을 확인할 수 있습니다.
 
+1.0.2의 **나우바 진단** 버튼은 기기 모델/Android 버전, 알림 허용, 채널 상태,
+진행 상태를 표시합니다. API 36 이상에서는 실제 게시된 알림을 읽어
+`canPostPromotedNotifications()`, `hasPromotableCharacteristics()`,
+`FLAG_PROMOTED_ONGOING`을 구분해서 표시합니다. 시스템 승격 여부가 나우바
+화면 표시를 증명하는 것은 아닙니다. API 35 이하에서는 표준 API 미지원 이유를 표시합니다.
+기존 버전도 표준 승격 요청을 하고 있었으므로, 이번 변경만으로 나우바 미표시가
+해결됐다고 단정하지 않습니다. Galaxy 모델/One UI 버전과 실제 진단 결과가 필요합니다.
+
 갤럭시의 `잠금화면 및 AOD → Now bar` 지원 앱 목록에 stwch가 나타나면 활성화하세요.
 실제 나우바 채택 여부는 OEM의 추가 조건, 소프트웨어/기종과 사용자 설정에
 의존하며 앱만으로 강제할 수 없습니다. 일시정지는 진행 중 Live Update가 아니라
@@ -78,8 +91,11 @@ AndroidX Core 1.17.0의 `setRequestPromotedOngoing(true)`와 시스템 Chronomet
 
 `SystemClock.elapsedRealtime()`로 시간량을 계산해 화면 OFF/절전 시간을 포함하고
 휴대폰 시각 변경에 영향을 받지 않습니다. UI는 보이는 동안만 50ms 간격으로
-렌더링합니다. 백그라운드 서비스에는 타이머 폴링이나 WakeLock이 없으며 시스템
-Chronometer가 알림 시간을 표시합니다. `specialUse` Foreground Service는 사용자
+렌더링합니다. 서비스는 실행 중에만 초 경계마다 알림 본문을 갱신합니다. 네트워크
+폴링이나 WakeLock은 없으며 시스템 Chronometer도 알림 시간을 표시합니다.
+절전 중 Handler가 지연돼도 tick을 세지 않고 단조 시계에서 계산하므로 측정은
+틀어지지 않습니다. 화면을 켜면 즉시 알림 본문을 갱신합니다. 일시정지/초기화/서비스
+종료 시 콜백을 제거합니다. `specialUse` Foreground Service는 사용자
 시작 명령에서만 실행하고, 일시정지/초기화 시 종료합니다.
 
 상태·중간기록·기록은 앱 내부 AtomicFile로 원자 저장합니다. 같은 부팅에서 앱
@@ -105,7 +121,7 @@ Chronometer가 알림 시간을 표시합니다. `specialUse` Foreground Service
 ./gradlew.bat testDebugUnitTest lintDebug assembleDebug
 ```
 
-배포 APK: `releases/stwch-v1.0.1-debug.apk`. 개인 테스트용 debug 서명이며
+배포 APK: `releases/stwch-v1.0.2-debug.apk`. 개인 테스트용 debug 서명이며
 공개 스토어 배포 전에는 별도 보호된 운영키와 foreground-service 정책 검토가 필요합니다.
 API 36 빌드는 나우바 지원 조건을 구현하지만 실제 갤럭시 표시를 보장하지 않습니다.
 
@@ -114,6 +130,7 @@ API 36 빌드는 나우바 지원 조건을 구현하지만 실제 갤럭시 표
 - `StopwatchEngine.kt`: 단조 시계 상태 머신, 10개 중간기록, 20개 구간 기록.
 - `WatchStore.kt`: 앱 내부 원자 저장과 같은 부팅/재부팅 복원.
 - `StopwatchService.kt`: Foreground Service와 상태 알림, Live Update 요청.
+- `NotificationTime.kt` / `NotificationTimeTest.kt`: 알림의 초 단위 시간 표시와 갱신 경계.
 - `ShortcutActivity.kt` / `res/xml/shortcuts.xml`: 버튼용 3개 단축키와 호환 선택창.
 - `MainActivity.kt` / `Ui.kt`: 터치 원형 화면, 중간기록, 설정 안내.
 - `HistoryActivity.kt`: 최신 20개 기록 조회.

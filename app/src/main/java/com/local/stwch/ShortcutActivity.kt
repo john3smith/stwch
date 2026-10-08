@@ -5,8 +5,8 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 
-/** Translucent, isolated command task grants a legitimate user-initiated FGS entry point.
- * It never launches MainActivity or removes the UI/caller task. */
+/** Translucent user-initiated FGS entry point. No affinity with the app UI and
+ * no forced task removal/reordering: finish only this command's Activity. */
 class ShortcutActivity : Activity() {
     private val pending = ArrayDeque<Intent>()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,8 +26,10 @@ class ShortcutActivity : Activity() {
                 WatchCommands.dispatch(this, it, WatchCommands.origin(command, WatchOrigin.ROUTINE))
             }
         }
-        // singleInstance + separate affinity ensure this is only the command's task.
-        if (isTaskRoot) finishAndRemoveTask() else finish()
+        // Removing a singleInstance task can expose Home instead of the caller on
+        // OEM shortcut launchers. Never finishAndRemoveTask/finishAffinity or
+        // moveTaskToBack here; each command closes only its own Activity.
+        finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
     }

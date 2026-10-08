@@ -1,4 +1,51 @@
-# stwch 1.0.1 검증
+# stwch 1.0.2 검증
+
+검증일: 2026-10-08. 패키지 `com.local.stwch`, versionCode 3.
+
+- `testDebugUnitTest lintDebug assembleDebug` 성공. JUnit 24개, 실패/오류 0개.
+- Lint 오류 0개, 기존 버전 안내 경고 2개와 KTX hint 1개.
+- Windows 실행 정책으로 `build.ps1` 직접 실행은 제한됨. 정책을 영구 변경하지 않고
+  같은 Gradle 검증 후 새 이름의 APK를 복사해 패키징함.
+- `releases/stwch-v1.0.2-debug.apk`, 2,430,061 bytes.
+- SHA-256 `f81b6f5fddf1dda41ca9d352e1c13d9632e58648d39c2ca87f28ec7667eb97b9`.
+- apksigner v2 서명 검증 통과. aapt min 26/target 36/version 1.0.2 확인.
+- 일반 Android Emulator `emulator-5554`, Android 15/API 35, `install -r` 성공.
+
+## 변경 경로 수동 검증
+
+- Settings Activity/task 211에서 START/PAUSE/중복 PAUSE/CLEAR_TASK형 START를
+  실행해도 동일 Settings Activity 유지. 프로세스 강제 종료 후 cold shortcut START도
+  같은 화면 유지 및 `isForeground=true` 확인.
+- Home에서 명령 호출 후 동일 NexusLauncher/task 192 유지.
+- HistoryActivity/task 243에서 launcher형 PAUSE 실행 후 동일 기록 화면 유지.
+- START 연속 6회: RUNNING, 누적시간 0, history 20개 유지, 명령 Activity 잔존 없음.
+- 루틴 중복 PAUSE: IDLE/0ms/중간기록 0, 기존 완료 기록 보존.
+- 실제 알림창의 `이어서 시작` 버튼 터치: PAUSED → RUNNING, 1,149ms 누적시간
+  유지, drawer를 닫으면 이전 Settings Activity 유지. 버튼 PendingIntent는
+  Activity가 아닌 Foreground Service로 전달됨.
+- 실행 중 알림 본문 `현재 시간 00:01 → 현재 시간 00:03` 갱신 실측.
+  제목/본문에 중간기록 문구 없음. 시스템 Chronometer와 승격 요청 extra true 확인.
+- 화면 OFF 3초 후 복귀, 서비스/측정 유지. 절전 지연 시 콜백 tick을 세지 않음.
+- 나우바 진단 화면 API 35 미지원 안내, 실제 모델/버전/알림·채널 상태 표시 확인.
+- crash buffer에 stwch crash 없음.
+
+## 이번 수정의 한계
+
+1.0.1의 `singleInstance` + `finishAndRemoveTask`는 OEM이 명령 task 제거 후 Home을
+선택할 가능성이 있는 경로였음. 이번에는 affinity 없는 standard/noHistory 명령
+Activity가 자기 Activity만 finish하도록 수정함. 에뮬레이터의 호출 화면 유지 검증은
+통과했지만, 사용자가 보고한 Galaxy Routine+ 환경을 직접 재현하지 못했으므로
+삼성 실기기의 원인 확정/화면 유지 해결을 보장하지 않음. 단축키 ID와 클래스는 유지함.
+
+기존 코드도 이미 표준 Live Updates 요청 extra를 설정하고 있었음. 따라서 나우바
+문제가 이번 버전만으로 해결됐다는 증거는 없음. API 36 진단 분기는 SDK 36 빌드로
+검증했으나 API 35 에뮬레이터에서 실행할 수 없으며, Samsung Now bar 자체도 없음.
+실제 Galaxy 모델/Android/One UI 버전, 표시 허용 설정과 새 진단 결과가 필요함.
+비공개 삼성 API, 가짜 미디어 세션이나 임의의 시스템/개발자 설정 변경은 사용하지 않음.
+
+---
+
+# stwch 1.0.1 이전 검증
 
 검증일: 2026-10-08. 패키지 `com.local.stwch`, versionCode 2.
 

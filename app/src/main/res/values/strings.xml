@@ -31,8 +31,15 @@
     <string name="channel_description">실행 중 시간과 일시정지 상태, 시작·초기화 버튼</string>
     <string name="notification_running">스톱워치 실행 중</string>
     <string name="notification_paused">스톱워치 일시정지</string>
-    <string name="notification_text">%1$s · 중간기록 %2$d/10</string>
-    <string name="notification_running_text">중간기록 %1$d/10 · 알림의 시간은 자동으로 증가합니다</string>
+    <string name="notification_time">현재 시간 %1$s</string>
+    <string name="live_diagnostics">나우바 진단</string>
+    <string name="live_diagnostics_body">%1$s · Android %2$s (API %3$d)\n알림 허용: %4$s\n상태 알림 채널: %5$s\n스톱워치: %6$s\n\n%7$s\n\n갤럭시 설정 → 잠금화면 및 AOD → Now bar → 실시간 알림에서 stwch를 켜 주세요. 앱이 목록에 없거나 승격되지 않는 경우 One UI의 추가 지원 조건일 수 있습니다. 이 앱은 삼성의 비공개 API나 가짜 미디어 알림을 사용하지 않습니다.</string>
+    <string name="enabled">켜짐</string>
+    <string name="disabled">꺼짐</string>
+    <string name="channel_missing">아직 생성되지 않음</string>
+    <string name="live_unsupported_detail">이 Android 버전에는 표준 Live Updates API가 없습니다. 일반 시간 알림은 제공하지만 삼성 나우바 표시는 보장할 수 없습니다.</string>
+    <string name="live_supported_detail">실시간 알림 허용: %1$s\n게시된 알림의 승격 형식 충족: %2$s\n시스템의 실제 알림 승격: %3$s\n(승격은 나우바 표시 확인과 다르며 삼성 화면에서 확인이 필요합니다.)</string>
+    <string name="live_no_active">진행 중 알림이 없음 — 먼저 스톱워치를 시작해 주세요.</string>
     <string name="pause">일시정지</string>
     <string name="resume">이어서 시작</string>
     <string name="close">닫기</string>

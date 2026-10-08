@@ -65,6 +65,9 @@ class MainActivity : Activity() {
         body.addView(pill(getString(R.string.integration), Palette.background).apply {
             setOnClickListener { integration() }
         }, LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
+        body.addView(pill(getString(R.string.live_diagnostics), Palette.background).apply {
+            setOnClickListener { liveDiagnostics() }
+        }, LinearLayout.LayoutParams(-1,-2))
         render()
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
             savedInstanceState == null && !getPreferences(MODE_PRIVATE).getBoolean("askedNotifications",false)) {
@@ -118,5 +121,36 @@ class MainActivity : Activity() {
                     catch (_: android.content.ActivityNotFoundException) { Toast.makeText(this,R.string.unsupported_live,Toast.LENGTH_LONG).show() }
                 } else Toast.makeText(this,R.string.unsupported_live,Toast.LENGTH_LONG).show()
             }.setNegativeButton(R.string.close,null).show()
+    }
+
+    private fun liveDiagnostics() {
+        val manager = getSystemService(NotificationManager::class.java)
+        fun flag(value: Boolean) = getString(if (value) R.string.enabled else R.string.disabled)
+        val channel = manager.getNotificationChannel(StopwatchService.CHANNEL)
+        val active = manager.activeNotifications.firstOrNull { it.id == StopwatchService.ID }?.notification
+        val detail = if (Build.VERSION.SDK_INT < 36) getString(R.string.live_unsupported_detail)
+            else if (active == null || store.engine.state.status != WatchStatus.RUNNING) getString(R.string.live_no_active)
+            else getString(R.string.live_supported_detail, flag(manager.canPostPromotedNotifications()),
+                flag(active.hasPromotableCharacteristics()),
+                flag(active.flags and Notification.FLAG_PROMOTED_ONGOING != 0))
+        val text = getString(R.string.live_diagnostics_body, Build.MODEL, Build.VERSION.RELEASE,
+            Build.VERSION.SDK_INT, flag(manager.areNotificationsEnabled()),
+            if (channel == null) getString(R.string.channel_missing) else flag(channel.importance != NotificationManager.IMPORTANCE_NONE),
+            getString(when (store.engine.state.status) {
+                WatchStatus.RUNNING -> R.string.running
+                WatchStatus.PAUSED -> R.string.paused
+                WatchStatus.IDLE -> R.string.ready
+            }), detail)
+        AlertDialog.Builder(this).setTitle(R.string.live_diagnostics).setMessage(text)
+            .setPositiveButton(R.string.notification_settings) { _, _ ->
+                startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+            }.setNeutralButton(R.string.live_settings) { _, _ ->
+                if (Build.VERSION.SDK_INT >= 36) {
+                    val settings = Intent(Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                    try { startActivity(settings) }
+                    catch (_: android.content.ActivityNotFoundException) { Toast.makeText(this, R.string.unsupported_live, Toast.LENGTH_LONG).show() }
+                } else Toast.makeText(this, R.string.unsupported_live, Toast.LENGTH_LONG).show()
+            }.setNegativeButton(R.string.close, null).show()
     }
 }
