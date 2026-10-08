@@ -1,0 +1,9 @@
+<resources>
+    <item name="center_timer" type="id" />
+    <item name="reset_button" type="id" />
+    <item name="lap_button" type="id" />
+    <item name="history_button" type="id" />
+    <item name="status_label" type="id" />
+    <item name="lap_list" type="id" />
+    <item name="history_list" type="id" />
+</resources>

@@ -1,0 +1,11 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:shortcutId="stopwatch_start" android:enabled="true" android:icon="@drawable/ic_launcher" android:shortcutShortLabel="@string/start_shortcut" android:shortcutLongLabel="@string/start_shortcut">
+        <intent android:action="com.local.stwch.START" android:targetPackage="com.local.stwch" android:targetClass="com.local.stwch.ShortcutActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="stopwatch_pause" android:enabled="true" android:icon="@drawable/ic_launcher" android:shortcutShortLabel="@string/pause_shortcut" android:shortcutLongLabel="@string/pause_shortcut">
+        <intent android:action="com.local.stwch.PAUSE" android:targetPackage="com.local.stwch" android:targetClass="com.local.stwch.ShortcutActivity" />
+    </shortcut>
+    <shortcut android:shortcutId="stopwatch_reset" android:enabled="true" android:icon="@drawable/ic_launcher" android:shortcutShortLabel="@string/reset_shortcut" android:shortcutLongLabel="@string/reset_shortcut">
+        <intent android:action="com.local.stwch.RESET" android:targetPackage="com.local.stwch" android:targetClass="com.local.stwch.ShortcutActivity" />
+    </shortcut>
+</shortcuts>
