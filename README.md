@@ -1,5 +1,7 @@
 # stwch
 
+[처음 사용하는 분을 위한 설명서](USER_GUIDE.md) · [APK 다운로드·미완성 버전 확인](https://github.com/john3smith/stwch/releases)
+
 동글동글한 피치·민트 디자인의 Android 스톱워치. Kotlin 네이티브 UI, 로컬 저장,
 백그라운드 알림, 세 가지 앱 단축키를 제공합니다. 서버·계정·인터넷 권한이 없습니다.
 
@@ -153,8 +155,11 @@ indeterminate 표현을 사용합니다. 종료 시점이 정해지지 않은 �
 ./gradlew.bat testDebugUnitTest lintDebug assembleDebug
 ```
 
-기존 배포 APK: `releases/stwch-v1.0.2-debug.apk`.
-진행 중 로컬 APK: `releases/stwch-v1.0.3_미완성-debug.apk` (Release/Telegram 배포 보류).
+기존 배포 APK: `stwch-v1.0.2-debug.apk`.
+1.0.3 사전 릴리즈 APK: `stwch-v1.0.3-unfinished-debug.apk`.
+배포 파일은 [GitHub Releases](https://github.com/john3smith/stwch/releases)에 있으며,
+1.0.3은 알려진 미해결 문제가 있는 테스트용입니다. 로컬 빌드의 `_미완성` 파일명과
+GitHub 자산의 `unfinished` 파일명은 같은 미완성 상태를 나타냅니다.
 개인 테스트용 debug 서명이며
 공개 스토어 배포 전에는 별도 보호된 운영키와 foreground-service 정책 검토가 필요합니다.
 API 36 빌드는 나우바 지원 조건을 구현하지만 실제 갤럭시 표시를 보장하지 않습니다.
