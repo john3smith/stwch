@@ -68,13 +68,16 @@ class StopwatchService : Service() {
                     + " promoteRequested=${initial.extras.getBoolean("android.requestPromotedOngoing")}")
             }, persist = { store.save() })
         val status = store.engine.state.status
-        if (status == WatchStatus.RUNNING) {
-            refreshRunning()
+        if (NotificationSession.forStatus(status).ongoing) {
+            if (status == WatchStatus.RUNNING) refreshRunning()
+            else handler.removeCallbacks(ticker)
+            // Preserve the same foreground notification while paused, without
+            // any recurring callback, advancing chronometer, or wake lock.
             return START_STICKY
         }
         handler.removeCallbacks(ticker)
-        stopForeground(if (status == WatchStatus.IDLE) STOP_FOREGROUND_REMOVE else STOP_FOREGROUND_DETACH)
-        if (status == WatchStatus.IDLE) manager.cancel(ID) else manager.notify(ID, notification())
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        manager.cancel(ID)
         stopSelf(startId)
         return START_NOT_STICKY
     }
@@ -93,7 +96,8 @@ class StopwatchService : Service() {
 
     private fun notification(): Notification {
         val s = store.engine.state
-        val running = s.status == WatchStatus.RUNNING
+        val session = NotificationSession.forStatus(s.status)
+        val running = session.ticking
         val elapsed = store.engine.elapsed(store.now())
         val content = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
@@ -104,11 +108,11 @@ class StopwatchService : Service() {
             .setContentText(getString(if (running) R.string.notification_time else R.string.notification_paused_time,
                 NotificationTime.text(elapsed)))
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH).setOnlyAlertOnce(true)
-            .setOngoing(running).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setOngoing(session.ongoing).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setColor(android.graphics.Color.rgb(236,118,94))
             .setWhen(System.currentTimeMillis() - elapsed).setShowWhen(running)
             .setUsesChronometer(running).setChronometerCountDown(false)
-            .setRequestPromotedOngoing(running)
+            .setRequestPromotedOngoing(session.ongoing)
             .addAction(R.drawable.ic_stopwatch, getString(if (running) R.string.pause else R.string.resume),
                 pending(if (running) WatchAction.PAUSE else WatchAction.START))
             .addAction(R.drawable.ic_stopwatch, getString(R.string.reset), pending(WatchAction.RESET))

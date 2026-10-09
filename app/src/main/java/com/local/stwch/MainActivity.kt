@@ -91,8 +91,8 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume(); handler.post(ticker)
-        // Recover an OS-killed service without resetting an active stopwatch.
-        if (store.engine.state.status == WatchStatus.RUNNING) {
+        // Recover a running or paused session without resetting its measurement.
+        if (NotificationSession.forStatus(store.engine.state.status).ongoing) {
             try { androidx.core.content.ContextCompat.startForegroundService(this, Intent(this,StopwatchService::class.java)) }
             catch (_: RuntimeException) { Toast.makeText(this,R.string.service_error,Toast.LENGTH_LONG).show() }
         }
@@ -142,7 +142,7 @@ class MainActivity : Activity() {
         val channel = manager.getNotificationChannel(StopwatchService.CHANNEL)
         val active = manager.activeNotifications.firstOrNull { it.id == StopwatchService.ID }?.notification
         val detail = if (Build.VERSION.SDK_INT < 36) getString(R.string.live_unsupported_detail)
-            else if (active == null || store.engine.state.status != WatchStatus.RUNNING) getString(R.string.live_no_active)
+            else if (active == null || !NotificationSession.forStatus(store.engine.state.status).ongoing) getString(R.string.live_no_active)
             else getString(R.string.live_supported_detail, flag(manager.canPostPromotedNotifications()),
                 flag(active.hasPromotableCharacteristics()),
                 flag(active.flags and Notification.FLAG_PROMOTED_ONGOING != 0))

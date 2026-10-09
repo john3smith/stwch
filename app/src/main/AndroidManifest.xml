@@ -23,7 +23,7 @@
         <service android:name=".StopwatchService" android:exported="false"
             android:foregroundServiceType="specialUse" android:stopWithTask="false">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-initiated stopwatch with elapsed-time notification and pause/reset controls; text refreshed at most once per second, no network polling or wake lock." />
+                android:value="User-initiated stopwatch session with elapsed-time notification and pause/resume/reset controls. Paused sessions retain a static notification until reset; text refreshes only while running, no network polling or wake lock." />
         </service>
     </application>
 </manifest>
