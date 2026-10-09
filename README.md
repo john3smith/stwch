@@ -2,12 +2,11 @@
 
 [처음 사용하는 분을 위한 설명서](USER_GUIDE.md) · [APK 다운로드·미완성 버전 확인](https://github.com/john3smith/stwch/releases)
 
-> **소스 1.0.5 검증 중 (2026-10-09):** 시작 명령을 메모리에서 적용한 뒤 첫
-> 포그라운드 알림을 게시하고, 파일 저장은 그 이후에 수행하도록 수정했습니다.
-> 첫 시작 알림이 일시정지/비승격 상태로 나가던 순서 문제를 제거했습니다.
-> 29개 JVM 테스트, 빌드·린트와 API 35 실제 시작/일시정지/재개 검증을 통과했지만,
-> 이 변경이 Samsung Now bar 미표시를 해결한다는 실기기 증거는 아직 없습니다.
-> 완료 Release/새 APK 외부 배포는 보류합니다. [이번 검증 기록](docs/nowbar-startup-2026-10-09.md).
+> **1.0.6 ADB 사용 안내 (2026-10-09):** 앱 메인화면에 나우바 ADB 활성화 안내를
+> 추가했습니다. 기존 1.0.5 APK는 삼성 RTL Galaxy S25 FE / Android 16 / One UI 8.5에서
+> 기기 전체 테스트 플래그를 활성화했을 때 실제 나우바가 표시됐습니다.
+> 앱 자체가 해당 설정을 변경하지 않으며 모든 기기의 표시를 보장하지 않습니다.
+> [실제 표시 검증 기록](docs/nowbar-confirmed-display-2026-10-09.md).
 
 동글동글한 피치·민트 디자인의 Android 스톱워치. Kotlin 네이티브 UI, 로컬 저장,
 백그라운드 알림, 세 가지 앱 단축키를 제공합니다. 서버·계정·인터넷 권한이 없습니다.
@@ -92,6 +91,47 @@ affinity가 없는 `standard` 투명 Activity에서 명령을 처리한 후 **Ac
 - [Android 앱 단축키](https://developer.android.com/develop/ui/compose/system/shortcuts/creating-shortcuts)
 
 ## 나우바 / Live Updates
+
+### 나우바 ADB 활성화 (Windows)
+
+**APK 설치만으로 나우바가 나타나지 않는 Galaxy 개발자용 기기는 PC의 ADB 설정이
+필요할 수 있습니다.** 검증한 방법은 삼성의 비공식 기기 전체 테스트 플래그이며,
+stwch 패키지만 허용하는 설정이 아닙니다. 모든 One UI에서 동작을 보장하지 않으며
+펌웨어 업데이트 후 유지 여부도 검증하지 않았습니다. 스톱워치 자체는 이 설정 없이도 사용 가능합니다.
+
+1. [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)를
+   준비하고 휴대폰의 개발자 옵션 → USB 디버깅을 켭니다. PC와 연결하고 휴대폰에서 연결을 허용합니다.
+2. [stwch-nowbar-adb-enable.bat](tools/stwch-nowbar-adb-enable.bat)를 내려받습니다.
+   다른 PC에서는 파일을 메모장으로 열어 `set "ADB=..."`의 경로를 자신의 `adb.exe`
+   절대 경로로 바꿉니다. 기본 경로는 이 프로젝트를 개발한 PC의 SDK 경로입니다.
+3. **실제 휴대폰은 한 대만 연결**한 뒤 BAT를 더블클릭합니다. `-d` 옵션으로
+   에뮬레이터를 제외하며 실제 기기가 여러 대이면 ADB가 오류를 내고 중단합니다.
+4. BAT가 출력하는 **원래 값**을 기록해 둡니다. 이어서 표시되는 적용 값이 `1`이면
+   설정이 저장된 것입니다. 이것만으로 실제 나우바 표시 성공을 의미하지는 않습니다.
+5. stwch의 알림 권한을 허용하고 스톱워치를 시작합니다. 이미 실행 중이라면 앱에서
+   **일시정지 → 다시 시작**합니다. 화면을 껐다 켜서 잠금화면의 나우바를 확인합니다.
+
+BAT는 다음 설정만 활성화합니다. 루팅, 앱 데이터 삭제, 앱별 권한 강제 허용은 하지 않습니다.
+
+```bat
+adb -d shell settings put secure enable_notification_nowbar_test 1
+adb -d shell settings get secure enable_notification_nowbar_test
+```
+
+되돌릴 때는 **실행 전 값**을 기준으로 복원합니다. 원래 `null`이었다면 새로 만든 설정만 삭제합니다.
+
+```bat
+adb -d shell settings delete secure enable_notification_nowbar_test
+```
+
+원래 `0`이었다면 `adb -d shell settings put secure enable_notification_nowbar_test 0`을 사용합니다.
+원래 다른 값이 있었다면 그 값으로 복원합니다. 기존 알림은 일시정지·재개하여 다시 게시합니다.
+이 설정을 앱에서 자동으로 변경하지 않습니다. USB 디버깅은 작업 후 필요에 따라 꺼 주세요.
+
+### 기존 검사와 공식 API
+
+아래 내용은 ADB 테스트 플래그 적용 전인 2026-10-08의 검사입니다. 이후 실제 표시 결과는
+[2026-10-09 검증 기록](docs/nowbar-confirmed-display-2026-10-09.md)을 참고하세요.
 
 2026-10-08 삼성 Remote Test Lab의 SM-S731N(Android 16 / One UI 8.5)에서
 실제 설치·실행하여 확인했습니다. 알림 권한, 잠금화면 표시, 승격 가능 조건 및

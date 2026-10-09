@@ -68,6 +68,19 @@ class MainActivity : Activity() {
         body.addView(pill(getString(R.string.live_diagnostics), Palette.background).apply {
             setOnClickListener { liveDiagnostics() }
         }, LinearLayout.LayoutParams(-1,-2))
+        body.addView(label(getString(R.string.nowbar_adb_hint), 12f, Palette.muted).apply {
+            setPadding(0, dp(12), 0, dp(6))
+        })
+        body.addView(pill(getString(R.string.nowbar_adb_title), Palette.background).apply {
+            id = R.id.nowbar_adb_help
+            setOnClickListener {
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(R.string.nowbar_adb_title)
+                    .setMessage(R.string.nowbar_adb_body)
+                    .setPositiveButton(R.string.close, null)
+                    .show()
+            }
+        }, LinearLayout.LayoutParams(-1, -2))
         render()
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
             savedInstanceState == null && !getPreferences(MODE_PRIVATE).getBoolean("askedNotifications",false)) {

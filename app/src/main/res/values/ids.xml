@@ -6,4 +6,5 @@
     <item name="status_label" type="id" />
     <item name="lap_list" type="id" />
     <item name="history_list" type="id" />
+    <item name="nowbar_adb_help" type="id" />
 </resources>
