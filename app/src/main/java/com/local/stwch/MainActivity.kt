@@ -5,7 +5,6 @@ import android.app.*
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.*
-import android.provider.Settings
 import android.view.*
 import android.widget.*
 
@@ -62,12 +61,6 @@ class MainActivity : Activity() {
         body.addView(laps)
         permissionHint = label(getString(R.string.notification_denied),12f,Palette.coral).apply { setPadding(0,dp(14),0,0) }
         body.addView(permissionHint)
-        body.addView(pill(getString(R.string.integration), Palette.background).apply {
-            setOnClickListener { integration() }
-        }, LinearLayout.LayoutParams(-1,-2).apply { topMargin=dp(18) })
-        body.addView(pill(getString(R.string.live_diagnostics), Palette.background).apply {
-            setOnClickListener { liveDiagnostics() }
-        }, LinearLayout.LayoutParams(-1,-2))
         body.addView(label(getString(R.string.nowbar_adb_hint), 12f, Palette.muted).apply {
             setPadding(0, dp(12), 0, dp(6))
         })
@@ -123,47 +116,4 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun integration() {
-        AlertDialog.Builder(this).setTitle(R.string.integration_title).setMessage(R.string.integration_body)
-            .setPositiveButton(R.string.notification_settings) { _,_->
-                startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,packageName))
-            }.setNeutralButton(R.string.live_settings) { _,_->
-                if (Build.VERSION.SDK_INT >= 36) {
-                    val settings=Intent(Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,packageName)
-                    try { startActivity(settings) }
-                    catch (_: android.content.ActivityNotFoundException) { Toast.makeText(this,R.string.unsupported_live,Toast.LENGTH_LONG).show() }
-                } else Toast.makeText(this,R.string.unsupported_live,Toast.LENGTH_LONG).show()
-            }.setNegativeButton(R.string.close,null).show()
-    }
-
-    private fun liveDiagnostics() {
-        val manager = getSystemService(NotificationManager::class.java)
-        fun flag(value: Boolean) = getString(if (value) R.string.enabled else R.string.disabled)
-        val channel = manager.getNotificationChannel(StopwatchService.CHANNEL)
-        val active = manager.activeNotifications.firstOrNull { it.id == StopwatchService.ID }?.notification
-        val detail = if (Build.VERSION.SDK_INT < 36) getString(R.string.live_unsupported_detail)
-            else if (active == null || !NotificationSession.forStatus(store.engine.state.status).ongoing) getString(R.string.live_no_active)
-            else getString(R.string.live_supported_detail, flag(manager.canPostPromotedNotifications()),
-                flag(active.hasPromotableCharacteristics()),
-                flag(active.flags and Notification.FLAG_PROMOTED_ONGOING != 0))
-        val text = getString(R.string.live_diagnostics_body, Build.MODEL, Build.VERSION.RELEASE,
-            Build.VERSION.SDK_INT, flag(manager.areNotificationsEnabled()),
-            if (channel == null) getString(R.string.channel_missing) else flag(channel.importance != NotificationManager.IMPORTANCE_NONE),
-            getString(when (store.engine.state.status) {
-                WatchStatus.RUNNING -> R.string.running
-                WatchStatus.PAUSED -> R.string.paused
-                WatchStatus.IDLE -> R.string.ready
-            }), detail)
-        AlertDialog.Builder(this).setTitle(R.string.live_diagnostics).setMessage(text + "\n\n" + CommandDiagnostics.describe(this))
-            .setPositiveButton(R.string.notification_settings) { _, _ ->
-                startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
-            }.setNeutralButton(R.string.live_settings) { _, _ ->
-                if (Build.VERSION.SDK_INT >= 36) {
-                    val settings = Intent(Settings.ACTION_APP_NOTIFICATION_PROMOTION_SETTINGS)
-                        .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-                    try { startActivity(settings) }
-                    catch (_: android.content.ActivityNotFoundException) { Toast.makeText(this, R.string.unsupported_live, Toast.LENGTH_LONG).show() }
-                } else Toast.makeText(this, R.string.unsupported_live, Toast.LENGTH_LONG).show()
-            }.setNegativeButton(R.string.close, null).show()
-    }
 }
