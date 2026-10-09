@@ -99,14 +99,18 @@ class StopwatchService : Service() {
         val session = NotificationSession.forStatus(s.status)
         val running = session.ticking
         val elapsed = store.engine.elapsed(store.now())
+        val elapsedText = NotificationTime.text(elapsed)
+        // Samsung may choose title, body, or status-chip text for its surface.
+        // All paused surfaces use the same frozen measurement, not a pause label.
+        val title = if (running) getString(R.string.notification_running) else elapsedText
+        val text = if (running) getString(R.string.notification_time, elapsedText) else elapsedText
         val content = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stopwatch).setContentIntent(content)
-            .setContentTitle(getString(if (running) R.string.notification_running else R.string.notification_paused))
-            .setContentText(getString(if (running) R.string.notification_time else R.string.notification_paused_time,
-                NotificationTime.text(elapsed)))
+            .setContentTitle(title)
+            .setContentText(text)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH).setOnlyAlertOnce(true)
             .setOngoing(session.ongoing).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setColor(android.graphics.Color.rgb(236,118,94))
@@ -122,11 +126,9 @@ class StopwatchService : Service() {
         if (running && Build.VERSION.SDK_INT >= 36) {
             builder.setStyle(NotificationCompat.ProgressStyle().setProgressIndeterminate(true))
         } else {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(getString(
-                if (running) R.string.notification_time else R.string.notification_paused_time,
-                NotificationTime.text(elapsed))))
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
-        if (!running) builder.setShortCriticalText(getString(R.string.pause))
+        if (!running) builder.setShortCriticalText(elapsedText)
         return builder.build()
     }
 

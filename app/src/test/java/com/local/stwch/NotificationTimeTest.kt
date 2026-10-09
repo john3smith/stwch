@@ -19,4 +19,13 @@ class NotificationTimeTest {
         assertEquals(1000L, NotificationTime.nextRefreshDelay(-1))
         assertTrue(NotificationTime.nextRefreshDelay(Long.MAX_VALUE) in 1..1000)
     }
+    @Test fun pausedDisplayRemainsFrozenAfterTimePasses() {
+        val engine = StopwatchEngine()
+        engine.apply(WatchAction.START, Stamp(1000, 101_000, 1), WatchOrigin.APP)
+        engine.apply(WatchAction.PAUSE, Stamp(84_456, 184_456, 1), WatchOrigin.APP)
+        val atPause = NotificationTime.text(engine.elapsed(Stamp(84_456, 184_456, 1)))
+        val later = NotificationTime.text(engine.elapsed(Stamp(3_684_456, 3_784_456, 1)))
+        assertEquals("01:23", atPause)
+        assertEquals(atPause, later)
+    }
 }
