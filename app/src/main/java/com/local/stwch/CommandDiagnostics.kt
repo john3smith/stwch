@@ -6,6 +6,14 @@ import android.content.Intent
 /** One local command receipt only; no caller package, URL, screen content or
  * usage history is collected. Helps distinguish OEM launch flags from app logic. */
 object CommandDiagnostics {
+    /** Bounded local logcat diagnostics: no arbitrary Intent extras/caller data. */
+    fun trace(activity: android.app.Activity, event: String) {
+        android.util.Log.d("stwch.Activity", "$event component=${activity.javaClass.simpleName}"
+            + " instance=${System.identityHashCode(activity)} task=${activity.taskId}"
+            + " root=${activity.isTaskRoot} finishing=${activity.isFinishing}"
+            + " flags=0x${Integer.toHexString(activity.intent.flags)}"
+            + " command=${WatchCommands.parse(activity.intent.action)?.name ?: "OPEN"}")
+    }
     fun record(context: Context, action: WatchAction, intent: Intent) {
         context.getSharedPreferences("command_diagnostics", Context.MODE_PRIVATE).edit()
             .putString("action", action.name).putInt("flags", intent.flags)

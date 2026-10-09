@@ -2,6 +2,11 @@
 
 [처음 사용하는 분을 위한 설명서](USER_GUIDE.md) · [APK 다운로드·미완성 버전 확인](https://github.com/john3smith/stwch/releases)
 
+> **1.0.10 루틴 화면 연결 (2026-10-09):** 기존 루틴 단축키가 메인 화면으로
+> 연결되도록 수정했습니다. 기존 메인 Activity/Task를 재사용하고, 명령은 화면이
+> 활성화된 뒤 한 번 처리합니다. API 35 에뮬레이터에서 `TASK_ON_HOME` 호출 후
+> 홈 이동이 사라졌으며 최근 앱에 메인 화면이 남았습니다. 실제 삼성 루틴은 아직
+> 검증하지 않았습니다. [원인·수정·검증 기록](docs/routine-foreground-2026-10-09.md).
 > **1.0.9 멈춘 시간 표시 (2026-10-09):** 일시정지 나우바의 짧은 표시값, 제목,
 > 본문을 `01:23`처럼 멈춘 측정시간으로 통일했습니다. `일시정지` 문구 대신 시간이
 > 보이며 크로노미터는 계속 꺼져 있습니다. 1.0.8의 버튼 삭제 변경도 포함합니다.
@@ -76,24 +81,29 @@
 
 루틴+ 등에서는 **앱 바로가기 → stwch → 시작/일시정지/초기화**를 선택해야 합니다.
 일반 `앱 열기 → stwch`는 화면을 여는 동작으로, 위 세 명령과 다릅니다.
-1.0.1의 `singleInstance`/전용 task 제거 방식을 폐기했습니다. 1.0.2에서는
-affinity가 없는 `standard` 투명 Activity에서 명령을 처리한 후 **Activity만 `finish()`** 합니다.
-`finishAndRemoveTask`, `finishAffinity`, `moveTaskToBack`이나 HOME intent를 사용하지
-않으며 메인화면을 열지 않습니다. 서비스 시작은 Activity가 resume된 뒤 수행해
-최신 Android의 사용자 시작 Foreground Service 정책을 지킵니다.
+1.0.10부터 기존 affinity 없는 투명 `ShortcutActivity`는 **메인화면을 여는 연결점**입니다.
+호출자의 `CLEAR_TASK`, `TASK_ON_HOME`, `EXCLUDE_FROM_RECENTS`를 복사하지 않고,
+새 명시적 Intent의 `NEW_TASK | CLEAR_TOP | SINGLE_TOP`으로 일반 앱 Task의 메인
+화면을 앞으로 가져옵니다. 이미 열려 있으면 같은 메인 Activity의 `onNewIntent()`로
+명령을 전달합니다. 기록 화면이 열려 있었다면 메인으로 돌아옵니다.
+연결점만 `finish()`하며 메인 Activity는 종료하지 않습니다. 메인 화면이 resume된
+뒤 명령을 한 번 서비스에 전달합니다. 화면 재개/회전으로 같은 명령을 다시 보내지 않습니다.
+`finishAndRemoveTask`, `finishAffinity`, `moveTaskToBack`, HOME intent나 서비스의
+백그라운드 Activity 실행은 사용하지 않습니다.
 알림 명령 버튼은 `PendingIntent.getForegroundService`를 사용해 Activity를 전혀 열지 않습니다.
 같은 단축키 ID와 클래스명을 유지하므로 저장된 매핑과 호환됩니다.
 다만 삼성 루틴 UI가 내부적으로 수행하는 화면 전환까지 앱에서 제어할 수는 없습니다.
 
-`NEW_TASK | CLEAR_TASK | TASK_ON_HOME`(`0x1000c000`) 호출은 1.0.2/현재 코드 모두
-이전 Settings 화면에서 Home으로 이동했습니다. `TASK_ON_HOME`은 호출자가 Android에
-홈 복귀를 요청하는 옵션입니다. NoDisplay/즉시 종료 또는 자신의 task를 재호출해서
-옵션을 제거하는 실험도 이 이동을 해결하지 못해 최종 코드에 포함하지 않았습니다.
-일반 `NEW_TASK | CLEAR_TASK`만 사용하는 경우 기존 화면은 유지됩니다. 이 재현이
-실제 Galaxy의 호출 옵션을 확인한 것은 아닙니다. 마지막 유효 루틴 명령/시각/flags
+이전 1.0.9는 `NEW_TASK | CLEAR_TASK | TASK_ON_HOME`(`0x1000c000`) 호출 후
+Settings 또는 앱 메인 화면에서 Home으로 이동했습니다. 1.0.10에서는 **일반 앱의
+메인 화면을 실제로 여는 구조**로 바꿔 동일 플래그의 홈 이동을 에뮬레이터에서 해결했습니다.
+이 재현이 실제 Galaxy의 호출 옵션을 확인한 것은 아닙니다. 삼성 루틴 자체가 나중에
+별도 Home 명령을 실행하거나 잠금/백그라운드 정책으로 실행을 거부하는 경우까지
+앱이 제어할 수는 없습니다. 마지막 유효 루틴 명령/시각/flags
 한 건만 앱 내부에 기록합니다. 1.0.8부터 나우바 진단 화면은 제거되어 앱 UI에서
 표시하지 않습니다. 호출자 앱 이름,
-전체 URL, 화면 내용과 앱 사용 이력은 수집하지 않습니다.
+전체 URL, 화면 내용과 앱 사용 이력은 수집하지 않습니다. `stwch.Activity` logcat에는
+Activity 생명주기, 인스턴스·Task ID와 명령/flags만 남겨 실제 기기에서 재사용·종료를 구분합니다.
 
 - [Android TASK_ON_HOME 정의](https://developer.android.com/reference/android/content/Intent#FLAG_ACTIVITY_TASK_ON_HOME)
 

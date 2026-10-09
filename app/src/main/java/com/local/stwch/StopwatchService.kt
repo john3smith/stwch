@@ -18,6 +18,13 @@ object WatchCommands {
         Intent(context, ShortcutActivity::class.java).setAction(PREFIX + action.name)
             .putExtra(EXTRA_ORIGIN, origin.name)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+    fun foregroundIntent(context: Context, action: WatchAction?, origin: WatchOrigin) =
+        Intent(context, MainActivity::class.java)
+            .setAction(action?.let { PREFIX + it.name } ?: Intent.ACTION_MAIN)
+            .putExtra(EXTRA_ORIGIN, origin.name)
+            // Select the normal app task, bring its root forward and reuse it.
+            // CLEAR_TOP closes an open HistoryActivity, not the root or service.
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
     fun dispatch(context: Context, action: WatchAction, origin: WatchOrigin = WatchOrigin.APP) {
         try {
             ContextCompat.startForegroundService(context,

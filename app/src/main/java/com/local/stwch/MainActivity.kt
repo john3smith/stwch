@@ -17,12 +17,16 @@ class MainActivity : Activity() {
     private lateinit var permissionHint: TextView
     private val handler = Handler(Looper.getMainLooper())
     private var rendered: Pair<WatchStatus, List<Lap>>? = null
+    private lateinit var launchCommands: LaunchCommandInbox
     private val ticker = object : Runnable {
         override fun run() { render(); handler.postDelayed(this, if (store.engine.state.status == WatchStatus.RUNNING) 50 else 200) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CommandDiagnostics.trace(this, "create")
+        launchCommands = LaunchCommandInbox(savedInstanceState?.getStringArrayList("launchCommands") ?: emptyList())
+        if (savedInstanceState == null) enqueueLaunchCommand(intent)
         store = WatchStore.get(this)
         val root = page()
         val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
@@ -83,14 +87,44 @@ class MainActivity : Activity() {
     }
 
     override fun onResume() {
-        super.onResume(); handler.post(ticker)
+        super.onResume()
+        CommandDiagnostics.trace(this, "resume")
+        // Dispatch only after this user-opened UI is resumed. No background
+        // Activity launch from the service; no replay on ordinary resume.
+        launchCommands.drain { WatchCommands.dispatch(this, it.action, it.origin) }
+        handler.removeCallbacks(ticker)
+        handler.post(ticker)
         // Recover a running or paused session without resetting its measurement.
         if (NotificationSession.forStatus(store.engine.state.status).ongoing) {
             try { androidx.core.content.ContextCompat.startForegroundService(this, Intent(this,StopwatchService::class.java)) }
             catch (_: RuntimeException) { Toast.makeText(this,R.string.service_error,Toast.LENGTH_LONG).show() }
         }
     }
-    override fun onPause() { handler.removeCallbacks(ticker); store.save(); super.onPause() }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        CommandDiagnostics.trace(this, "new-intent")
+        enqueueLaunchCommand(intent)
+    }
+    private fun enqueueLaunchCommand(intent: Intent) {
+        WatchCommands.parse(intent.action)?.let {
+            launchCommands.enqueue(it, WatchCommands.origin(intent, WatchOrigin.ROUTINE))
+        }
+    }
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putStringArrayList("launchCommands", launchCommands.snapshot())
+        super.onSaveInstanceState(outState)
+    }
+    override fun onPause() {
+        CommandDiagnostics.trace(this, "pause")
+        handler.removeCallbacks(ticker); store.save(); super.onPause()
+    }
+    override fun onStop() { CommandDiagnostics.trace(this, "stop"); super.onStop() }
+    override fun onDestroy() {
+        CommandDiagnostics.trace(this, "destroy")
+        handler.removeCallbacks(ticker)
+        super.onDestroy()
+    }
 
     private fun command(action: WatchAction) { WatchCommands.dispatch(this,action); handler.postDelayed({ render() },80) }
 

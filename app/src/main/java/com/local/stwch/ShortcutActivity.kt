@@ -5,8 +5,8 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 
-/** Translucent user-initiated FGS entry point. No affinity with the app UI and
- * no forced task removal/reordering: finish only this command's Activity. */
+/** Compatibility entry for existing OEM mappings. While visibly resumed, hand
+ * off to the app's normal task before finishing this transient Activity. */
 class ShortcutActivity : Activity() {
     private val pending = ArrayDeque<Intent>()
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,14 +22,16 @@ class ShortcutActivity : Activity() {
         super.onResume()
         while (pending.isNotEmpty()) {
             val command = pending.removeFirst()
-            WatchCommands.parse(command.action)?.let {
-                CommandDiagnostics.record(this, it, command)
-                WatchCommands.dispatch(this, it, WatchCommands.origin(command, WatchOrigin.ROUTINE))
-            }
+            val action = WatchCommands.parse(command.action)
+            if (action != null) CommandDiagnostics.record(this, action, command)
+            CommandDiagnostics.trace(this, "shortcut-handoff")
+            // Fresh explicit Intent: never copy caller CLEAR_TASK/TASK_ON_HOME/
+            // EXCLUDE_FROM_RECENTS onto the real UI. Dispatch only in MainActivity.
+            startActivity(WatchCommands.foregroundIntent(this, action,
+                WatchCommands.origin(command, WatchOrigin.ROUTINE)))
         }
-        // Removing a singleInstance task can expose Home instead of the caller on
-        // OEM shortcut launchers. Never finishAndRemoveTask/finishAffinity or
-        // moveTaskToBack here; each command closes only its own Activity.
+        // MainActivity is now above/reusing its normal recent task. Finish only
+        // the trampoline, never the app's task or other Activities.
         finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)
