@@ -99,19 +99,37 @@ affinity가 없는 `standard` 투명 Activity에서 명령을 처리한 후 **Ac
 stwch 패키지만 허용하는 설정이 아닙니다. 모든 One UI에서 동작을 보장하지 않으며
 펌웨어 업데이트 후 유지 여부도 검증하지 않았습니다. 스톱워치 자체는 이 설정 없이도 사용 가능합니다.
 
-1. [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)를
-   준비하고 휴대폰의 개발자 옵션 → USB 디버깅을 켭니다. PC와 연결하고 휴대폰에서 연결을 허용합니다.
-2. [stwch-nowbar-adb-enable.bat](tools/stwch-nowbar-adb-enable.bat)를 내려받습니다.
-   다른 PC에서는 파일을 메모장으로 열어 `set "ADB=..."`의 경로를 자신의 `adb.exe`
-   절대 경로로 바꿉니다. 기본 경로는 이 프로젝트를 개발한 PC의 SDK 경로입니다.
-3. **실제 휴대폰은 한 대만 연결**한 뒤 BAT를 더블클릭합니다. `-d` 옵션으로
-   에뮬레이터를 제외하며 실제 기기가 여러 대이면 ADB가 오류를 내고 중단합니다.
-4. BAT가 출력하는 **원래 값**을 기록해 둡니다. 이어서 표시되는 적용 값이 `1`이면
+1. Windows 10/11 PC에 휴대폰을 연결하고 개발자 옵션 → USB 디버깅을 켠 뒤
+   휴대폰에서 연결을 허용합니다. USB 드라이버가 없으면 제조사 공식 드라이버를 설치해야 합니다.
+2. [stwch-nowbar-adb-enable.bat](tools/stwch-nowbar-adb-enable.bat)를 내려받아 더블클릭합니다.
+   EXE, Android Studio, 관리자 권한은 필요하지 않습니다. BAT 하나에 필요한 PowerShell 코드가 들어 있습니다.
+3. BAT는 옆의 `platform-tools/adb.exe` 또는 `adb.exe`, `ANDROID_SDK_ROOT` /
+   `ANDROID_HOME`, Android Studio 기본 SDK 경로, 이전에 다운로드한 캐시, PATH 순으로 ADB를 찾습니다.
+   고정된 개발 PC 경로를 사용하지 않습니다. ADB가 없으면 공식 SDK 라이선스·다운로드 안내를
+   표시하며 `y`로 동의한 경우에만 Google 공식 Platform-Tools를 다운로드합니다.
+   저장 위치는 `%LOCALAPPDATA%/stwch/adb-cache/<고유폴더>/platform-tools`이고 기존 SDK를 덮어쓰지 않습니다.
+   이미 ADB가 있으면 다운로드 없이 오프라인으로 사용할 수 있습니다.
+4. **실제 휴대폰은 한 대만 연결**해야 합니다. 목록의 `emulator-*`, `localhost:*`,
+   `127.0.0.1:*` 기기는 제외하고, 나머지 준비된 기기가 정확히 한 대일 때 해당 시리얼을
+   명시하여 실행합니다. USB뿐 아니라 이미 연결된 무선 ADB도 지원합니다. 다른 실제 기기가
+   여러 대이거나 승인 대기/연결 오류이면 설정을 변경하지 않고 중단합니다.
+5. 표시된 **선택 기기와 원래 값**을 확인하고 원래 값을 기록해 둡니다. 기기 전체 비공식
+   설정 변경에 `y`로 동의하면 활성화합니다. 이어서 표시되는 적용 값이 `1`이면
    설정이 저장된 것입니다. 이것만으로 실제 나우바 표시 성공을 의미하지는 않습니다.
-5. stwch의 알림 권한을 허용하고 스톱워치를 시작합니다. 이미 실행 중이라면 앱에서
+6. stwch의 알림 권한을 허용하고 스톱워치를 시작합니다. 이미 실행 중이라면 앱에서
    **일시정지 → 다시 시작**합니다. 화면을 껐다 켜서 잠금화면의 나우바를 확인합니다.
 
-BAT는 다음 설정만 활성화합니다. 루팅, 앱 데이터 삭제, 앱별 권한 강제 허용은 하지 않습니다.
+ADB 경로만 안전하게 확인하려면 `stwch-nowbar-adb-enable.bat --check`를 실행합니다.
+이 모드는 다운로드, 기기 목록 조회, 휴대폰 설정 변경을 하지 않습니다.
+특정 ADB 실행 파일을 지정하려면 실행 전 `STWCH_ADB` 환경변수에 절대 경로를 넣습니다.
+
+도구 로직 검증: `powershell -NoProfile -ExecutionPolicy Bypass -File tools/test-portable-nowbar-bat.ps1`.
+PowerShell 구문, USB/무선 기기 선택, 에뮬레이터 제외, 복수·미승인 기기 거부, 취소,
+읽기/쓰기 오류와 값 검증을 20개 검사로 확인합니다. 휴대폰 응답은 모의 처리하며 실제
+설정 변경·다운로드는 하지 않습니다. 자동 다운로드/추출 경로는 다른 PC에서 실동작 검증하지 않았습니다.
+
+BAT는 선택한 시리얼을 `-s`로 지정해 다음 설정만 활성화합니다. 루팅, 앱 데이터 삭제,
+앱별 권한 강제 허용은 하지 않습니다. 아래 수동 예시는 실제 기기가 한 대일 때의 `-d` 방식입니다.
 
 ```bat
 adb -d shell settings put secure enable_notification_nowbar_test 1
