@@ -5,12 +5,13 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 
-/** Compatibility entry for existing OEM mappings. While visibly resumed, hand
- * off to the app's normal task before finishing this transient Activity. */
+/** Transparent user-invoked command entry. Never brings the stopwatch UI forward.
+ * Dispatch while resumed so the foreground-service request is user initiated. */
 class ShortcutActivity : Activity() {
     private val pending = ArrayDeque<Intent>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        CommandDiagnostics.trace(this, "shortcut-create")
         if (savedInstanceState?.getBoolean("handled") != true) pending.addLast(intent)
     }
     override fun onNewIntent(intent: Intent) {
@@ -23,15 +24,15 @@ class ShortcutActivity : Activity() {
         while (pending.isNotEmpty()) {
             val command = pending.removeFirst()
             val action = WatchCommands.parse(command.action)
-            if (action != null) CommandDiagnostics.record(this, action, command)
-            CommandDiagnostics.trace(this, "shortcut-handoff")
-            // Fresh explicit Intent: never copy caller CLEAR_TASK/TASK_ON_HOME/
-            // EXCLUDE_FROM_RECENTS onto the real UI. Dispatch only in MainActivity.
-            startActivity(WatchCommands.foregroundIntent(this, action,
-                WatchCommands.origin(command, WatchOrigin.ROUTINE)))
+            if (action != null) {
+                CommandDiagnostics.record(this, action, command)
+                CommandDiagnostics.trace(this, "shortcut-background-dispatch")
+                WatchCommands.dispatch(this, action,
+                    WatchCommands.origin(command, WatchOrigin.ROUTINE))
+            }
         }
-        // MainActivity is now above/reusing its normal recent task. Finish only
-        // the trampoline, never the app's task or other Activities.
+        // Finish only this transparent entry. Do not launch MainActivity, send
+        // HOME, move tasks, or finish the existing stopwatch Activity/task.
         finish()
         @Suppress("DEPRECATION")
         overridePendingTransition(0, 0)

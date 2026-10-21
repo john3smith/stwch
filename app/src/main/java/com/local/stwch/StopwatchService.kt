@@ -18,13 +18,6 @@ object WatchCommands {
         Intent(context, ShortcutActivity::class.java).setAction(PREFIX + action.name)
             .putExtra(EXTRA_ORIGIN, origin.name)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION or Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-    fun foregroundIntent(context: Context, action: WatchAction?, origin: WatchOrigin) =
-        Intent(context, MainActivity::class.java)
-            .setAction(action?.let { PREFIX + it.name } ?: Intent.ACTION_MAIN)
-            .putExtra(EXTRA_ORIGIN, origin.name)
-            // Select the normal app task, bring its root forward and reuse it.
-            // CLEAR_TOP closes an open HistoryActivity, not the root or service.
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
     fun dispatch(context: Context, action: WatchAction, origin: WatchOrigin = WatchOrigin.APP) {
         try {
             ContextCompat.startForegroundService(context,
@@ -107,22 +100,22 @@ class StopwatchService : Service() {
         val running = session.ticking
         val elapsed = store.engine.elapsed(store.now())
         val elapsedText = NotificationTime.text(elapsed)
-        // Samsung may choose title, body, or status-chip text for its surface.
-        // All paused surfaces use the same frozen measurement, not a pause label.
-        val title = if (running) getString(R.string.notification_running) else elapsedText
-        val text = if (running) getString(R.string.notification_time, elapsedText) else elapsedText
+        // Put only the measurement in the prominent title. One UI owns Now Bar
+        // typography; custom RemoteViews would make this ineligible for promotion.
+        // No state label, critical-text copy or system chronometer competes
+        // with the title. The existing elapsed-second ticker updates it.
         val content = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stopwatch).setContentIntent(content)
-            .setContentTitle(title)
-            .setContentText(text)
+            .setContentTitle(elapsedText)
+            .setContentText(null)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH).setOnlyAlertOnce(true)
             .setOngoing(session.ongoing).setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setColor(android.graphics.Color.rgb(236,118,94))
-            .setWhen(System.currentTimeMillis() - elapsed).setShowWhen(running)
-            .setUsesChronometer(running).setChronometerCountDown(false)
+            .setWhen(0L).setShowWhen(false)
+            .setUsesChronometer(false)
             .setRequestPromotedOngoing(session.ongoing)
             .addAction(R.drawable.ic_stopwatch, getString(if (running) R.string.pause else R.string.resume),
                 pending(if (running) WatchAction.PAUSE else WatchAction.START))
@@ -132,10 +125,7 @@ class StopwatchService : Service() {
         // a percent or using Samsung's private notification/media APIs.
         if (running && Build.VERSION.SDK_INT >= 36) {
             builder.setStyle(NotificationCompat.ProgressStyle().setProgressIndeterminate(true))
-        } else {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
-        if (!running) builder.setShortCriticalText(elapsedText)
         return builder.build()
     }
 

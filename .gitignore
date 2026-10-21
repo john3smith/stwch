@@ -12,3 +12,9 @@ verification/
 *.log
 .env*
 __pycache__/
+
+# Store signing and local publisher configuration
+store-signing.properties
+store-local.properties
+*.p12
+*.pfx

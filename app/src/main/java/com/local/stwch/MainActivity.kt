@@ -39,6 +39,7 @@ class MainActivity : Activity() {
             id = R.id.history_button; setOnClickListener { startActivity(Intent(this@MainActivity, HistoryActivity::class.java)) }
         })
         body.addView(header)
+        StoreInfo.addButton(this, body)
         body.addView(label(getString(R.string.tagline), 14f, Palette.muted).apply { setPadding(0,dp(5),0,dp(18)) })
         status = label(getString(R.string.ready), 14f, bold = true).apply {
             id = R.id.status_label; gravity = Gravity.CENTER; background = card(Palette.mint, 20)
@@ -65,19 +66,21 @@ class MainActivity : Activity() {
         body.addView(laps)
         permissionHint = label(getString(R.string.notification_denied),12f,Palette.coral).apply { setPadding(0,dp(14),0,0) }
         body.addView(permissionHint)
-        body.addView(label(getString(R.string.nowbar_adb_hint), 12f, Palette.muted).apply {
-            setPadding(0, dp(12), 0, dp(6))
-        })
-        body.addView(pill(getString(R.string.nowbar_adb_title), Palette.background).apply {
-            id = R.id.nowbar_adb_help
-            setOnClickListener {
-                AlertDialog.Builder(this@MainActivity)
-                    .setTitle(R.string.nowbar_adb_title)
-                    .setMessage(R.string.nowbar_adb_body)
-                    .setPositiveButton(R.string.close, null)
-                    .show()
-            }
-        }, LinearLayout.LayoutParams(-1, -2))
+        if (!resources.getBoolean(R.bool.store_distribution)) {
+            body.addView(label(getString(R.string.nowbar_adb_hint), 12f, Palette.muted).apply {
+                setPadding(0, dp(12), 0, dp(6))
+            })
+            body.addView(pill(getString(R.string.nowbar_adb_title), Palette.background).apply {
+                id = R.id.nowbar_adb_help
+                setOnClickListener {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle(R.string.nowbar_adb_title)
+                        .setMessage(R.string.nowbar_adb_body)
+                        .setPositiveButton(R.string.close, null)
+                        .show()
+                }
+            }, LinearLayout.LayoutParams(-1, -2))
+        }
         render()
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
             savedInstanceState == null && !getPreferences(MODE_PRIVATE).getBoolean("askedNotifications",false)) {
