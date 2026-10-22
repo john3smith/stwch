@@ -1,0 +1,9 @@
+{
+  "format": 1,
+  "rotation_min_sdk": 33,
+  "legacy_certificate_sha256": "97a629dccea6d8cc04480c762dd88b8d31c9eba5fc06ba9e95df130fbab01765",
+  "release_certificate_sha256": "8dd8698ce0179ab8d5e89ec20d41ca26fa78f4723cb66923d94bccbb82bafb0f",
+  "package": "com.local.stwch",
+  "version_introduced": "1.0.15",
+  "legacy_signature_permission": true
+}
