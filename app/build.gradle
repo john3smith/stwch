@@ -11,7 +11,7 @@ android {
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = '17' }
-    buildTypes { release { minifyEnabled false } }
+    buildTypes { release { debuggable false; signingConfig null; minifyEnabled false } }
 }
 dependencies {
     implementation 'androidx.core:core:1.17.0'
@@ -19,3 +19,5 @@ dependencies {
 }
 
 apply from: rootProject.file("gradle/store-release.gradle")
+
+apply from: rootProject.file("gradle/release-safety.gradle")
