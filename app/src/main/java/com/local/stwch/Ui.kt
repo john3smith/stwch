@@ -31,8 +31,13 @@ fun Context.label(text: String, size: Float = 16f, color: Int = Palette.ink, bol
 fun Context.pill(text: String, color: Int = Palette.peach) = Button(this).apply {
     this.text = text; isAllCaps = false; textSize = 15f; setTextColor(Palette.ink)
     typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-    background = RippleDrawable(ColorStateList.valueOf(0x22000000), card(color, 30), null)
-    setPadding(dp(18), dp(10), dp(18), dp(10)); minHeight = dp(52); minimumWidth = 0
+    // Default Button elevation/state animation extends outside tight rows.
+    // Keep rounded touch feedback within the button instead of a clipped shadow.
+    stateListAnimator = null; elevation = 0f; translationZ = 0f
+    background = RippleDrawable(ColorStateList.valueOf(0x22000000), card(color, 30), card(Color.WHITE, 30))
+    setPadding(dp(18), dp(10), dp(18), dp(10))
+    minHeight = dp(52); minimumHeight = dp(52); minWidth = 0; minimumWidth = 0
+    gravity = Gravity.CENTER
 }
 
 fun Activity.page(): LinearLayout {

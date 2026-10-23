@@ -19,9 +19,7 @@ import java.nio.charset.StandardCharsets;
 public final class StoreInfo {
     private StoreInfo() { }
     public static void addButton(Activity activity, ViewGroup parent) {
-        Button button = new Button(activity);
-        button.setText("개인정보·권한 안내");
-        button.setAllCaps(false);
+        Button button = UiKt.pill(activity, "개인정보·권한 안내", Palette.INSTANCE.getMint());
         button.setOnClickListener(view -> show(activity));
         parent.addView(button, new ViewGroup.LayoutParams(-1, -2));
     }

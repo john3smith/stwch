@@ -38,7 +38,7 @@ class MainActivity : Activity() {
         header.addView(pill(getString(R.string.history), Palette.mint).apply {
             id = R.id.history_button; setOnClickListener { startActivity(Intent(this@MainActivity, HistoryActivity::class.java)) }
         })
-        body.addView(header)
+        body.addView(header, LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
         StoreInfo.addButton(this, body)
         body.addView(label(getString(R.string.tagline), 14f, Palette.muted).apply { setPadding(0,dp(5),0,dp(18)) })
         status = label(getString(R.string.ready), 14f, bold = true).apply {
@@ -50,16 +50,23 @@ class MainActivity : Activity() {
         val side = dp(minOf(324, (width - 44).toInt()))
         face = StopwatchFace(this).apply { setOnClickListener { command(WatchAction.TOGGLE) } }
         body.addView(face, LinearLayout.LayoutParams(side,side).apply { gravity = Gravity.CENTER_HORIZONTAL; topMargin=dp(16); bottomMargin=dp(14) })
-        val controls = LinearLayout(this)
+        val stackControls = resources.configuration.fontScale >= 1.6f || width < 294
+        val controls = LinearLayout(this).apply {
+            gravity=Gravity.CENTER_VERTICAL
+            orientation=if(stackControls) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        }
+        fun controlLayout(first: Boolean) = if(stackControls)
+            LinearLayout.LayoutParams(-1,-2).apply { if(first) bottomMargin=dp(10) }
+        else LinearLayout.LayoutParams(0,-2,1f).apply { if(first) marginEnd=dp(10) }
         controls.addView(pill(getString(R.string.reset), Palette.ink).apply {
-            id=R.id.reset_button; setTextColor(android.graphics.Color.WHITE)
+            id=R.id.reset_button; setTextColor(android.graphics.Color.WHITE); minimumHeight=dp(56)
             setOnClickListener { command(WatchAction.RESET) }
-        }, LinearLayout.LayoutParams(0,dp(56),1f).apply { marginEnd=dp(10) })
-        lapButton = pill(getString(R.string.lap)).apply { id=R.id.lap_button; setOnClickListener {
+        }, controlLayout(true))
+        lapButton = pill(getString(R.string.lap)).apply { id=R.id.lap_button; minimumHeight=dp(56); setOnClickListener {
             if (store.engine.state.laps.size >= 10) Toast.makeText(this@MainActivity,R.string.lap_max,Toast.LENGTH_SHORT).show()
             else command(WatchAction.LAP)
         } }
-        controls.addView(lapButton, LinearLayout.LayoutParams(0,dp(56),1f))
+        controls.addView(lapButton, controlLayout(false))
         body.addView(controls)
         body.addView(label(getString(R.string.lap_title), 16f, bold=true).apply { setPadding(0,dp(26),0,dp(12)) })
         laps = LinearLayout(this).apply { id=R.id.lap_list; orientation=LinearLayout.VERTICAL }
