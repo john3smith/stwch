@@ -15,6 +15,7 @@ class MainActivity : Activity() {
     private lateinit var laps: LinearLayout
     private lateinit var lapButton: Button
     private lateinit var permissionHint: TextView
+    private var settingsDialog: AlertDialog? = null
     private val handler = Handler(Looper.getMainLooper())
     private var rendered: Pair<WatchStatus, List<Lap>>? = null
     private lateinit var launchCommands: LaunchCommandInbox
@@ -39,7 +40,10 @@ class MainActivity : Activity() {
             id = R.id.history_button; setOnClickListener { startActivity(Intent(this@MainActivity, HistoryActivity::class.java)) }
         })
         body.addView(header, LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
-        StoreInfo.addButton(this, body)
+        body.addView(pill(getString(R.string.settings), Palette.background).apply {
+            id = R.id.settings_button
+            setOnClickListener { showSettings() }
+        }, LinearLayout.LayoutParams(-1,-2))
         body.addView(label(getString(R.string.tagline), 14f, Palette.muted).apply { setPadding(0,dp(5),0,dp(18)) })
         status = label(getString(R.string.ready), 14f, bold = true).apply {
             id = R.id.status_label; gravity = Gravity.CENTER; background = card(Palette.mint, 20)
@@ -132,11 +136,25 @@ class MainActivity : Activity() {
     override fun onStop() { CommandDiagnostics.trace(this, "stop"); super.onStop() }
     override fun onDestroy() {
         CommandDiagnostics.trace(this, "destroy")
+        settingsDialog?.dismiss()
+        settingsDialog = null
         handler.removeCallbacks(ticker)
         super.onDestroy()
     }
 
     private fun command(action: WatchAction) { WatchCommands.dispatch(this,action); handler.postDelayed({ render() },80) }
+
+    private fun showSettings() {
+        if (settingsDialog?.isShowing == true) return
+        settingsDialog = AlertDialog.Builder(this)
+            .setTitle(R.string.settings)
+            .setItems(arrayOf(getString(R.string.privacy_guide))) { _, _ -> StoreInfo.show(this) }
+            .setPositiveButton(R.string.close, null)
+            .create().also { dialog ->
+                dialog.setOnDismissListener { settingsDialog = null }
+                dialog.show()
+            }
+    }
 
     private fun render() {
         val s = store.engine.state

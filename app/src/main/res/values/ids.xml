@@ -1,4 +1,5 @@
 <resources>
+    <item name="settings_button" type="id" />
     <item name="center_timer" type="id" />
     <item name="reset_button" type="id" />
     <item name="lap_button" type="id" />

@@ -1,4 +1,6 @@
 <resources>
+    <string name="settings">설정</string>
+    <string name="privacy_guide">개인정보·권한 안내</string>
     <string name="app_name">stwch</string>
     <string name="start_shortcut">스톱워치 시작</string>
     <string name="pause_shortcut">스톱워치 일시정지</string>
