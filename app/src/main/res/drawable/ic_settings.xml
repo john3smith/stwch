@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original geometric eight-tooth cog drawn for stwch; no external artwork. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#232421" android:fillType="evenOdd"
+        android:pathData="M19.391,8.939 L19.762,10.065 L22.537,10.142 L22.537,13.858 L19.762,13.935 L19.391,15.061 L19.391,15.061 L18.857,16.120 L20.765,18.137 L18.137,20.765 L16.120,18.857 L15.061,19.391 L15.061,19.391 L13.935,19.762 L13.858,22.537 L10.142,22.537 L10.065,19.762 L8.939,19.391 L8.939,19.391 L7.880,18.857 L5.863,20.765 L3.235,18.137 L5.143,16.120 L4.609,15.061 L4.609,15.061 L4.238,13.935 L1.463,13.858 L1.463,10.142 L4.238,10.065 L4.609,8.939 L4.609,8.939 L5.143,7.880 L3.235,5.863 L5.863,3.235 L7.880,5.143 L8.939,4.609 L8.939,4.609 L10.065,4.238 L10.142,1.463 L13.858,1.463 L13.935,4.238 L15.061,4.609 L15.061,4.609 L16.120,5.143 L18.137,3.235 L20.765,5.863 L18.857,7.880 L19.391,8.939 Z M12,8.5 A3.5,3.5 0,1 0,12,15.5 A3.5,3.5 0,1 0,12,8.5 Z" />
+</vector>
