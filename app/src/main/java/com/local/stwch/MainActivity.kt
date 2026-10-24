@@ -39,11 +39,15 @@ class MainActivity : Activity() {
         header.addView(pill(getString(R.string.history), Palette.mint).apply {
             id = R.id.history_button; setOnClickListener { startActivity(Intent(this@MainActivity, HistoryActivity::class.java)) }
         })
-        body.addView(header, LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
-        body.addView(pill(getString(R.string.settings), Palette.background).apply {
+        header.addView(pill("", Palette.mint).apply {
             id = R.id.settings_button
+            contentDescription = getString(R.string.settings)
+            tooltipText = getString(R.string.settings)
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_settings, 0, 0, 0)
             setOnClickListener { showSettings() }
-        }, LinearLayout.LayoutParams(-1,-2))
+        }, LinearLayout.LayoutParams(dp(52), dp(52)).apply { marginStart=dp(8) })
+        body.addView(header, LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(8) })
         body.addView(label(getString(R.string.tagline), 14f, Palette.muted).apply { setPadding(0,dp(5),0,dp(18)) })
         status = label(getString(R.string.ready), 14f, bold = true).apply {
             id = R.id.status_label; gravity = Gravity.CENTER; background = card(Palette.mint, 20)
