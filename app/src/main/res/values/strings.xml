@@ -59,5 +59,6 @@
     <string name="reboot_reason">기기 재시작으로 복구</string>
     <string name="service_error">백그라운드 실행을 시작하지 못했습니다. 앱을 열어 다시 시도해 주세요.</string>
     <string name="storage_error">기록을 저장하지 못했습니다. 저장공간을 확인해 주세요. 앱이 종료되면 미저장 기록은 복원되지 않습니다.</string>
+    <string name="storage_recovered">이전 기록을 읽지 못해 복구 사본을 앱 내부에 보존했습니다. 새 측정을 시작할 수 있지만 이전 기록은 자동 복원되지 않았습니다.</string>
     <string name="notification_denied">알림 권한이 꺼져 있어 상태 알림이 숨겨져요. 알림 설정에서 허용해 주세요.</string>
 </resources>
