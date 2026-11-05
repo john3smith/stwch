@@ -18,6 +18,7 @@ class MainActivity : Activity() {
     private var settingsDialog: AlertDialog? = null
     private val handler = Handler(Looper.getMainLooper())
     private var rendered: Pair<WatchStatus, List<Lap>>? = null
+    private val lapTimers = mutableListOf<Pair<Lap, TextView>>()
     private lateinit var launchCommands: LaunchCommandInbox
     private val ticker = object : Runnable {
         override fun run() { render(); handler.postDelayed(this, if (store.engine.state.status == WatchStatus.RUNNING) 50 else 200) }
@@ -167,19 +168,36 @@ class MainActivity : Activity() {
         permissionHint.visibility = if (getSystemService(NotificationManager::class.java).areNotificationsEnabled()) View.GONE else View.VISIBLE
         lapButton.isEnabled=s.status == WatchStatus.RUNNING; lapButton.alpha=if(lapButton.isEnabled)1f else .45f
         val key=s.status to s.laps
-        if (rendered == key) return
+        if (rendered == key) { updateLapTimers(face.elapsed); return }
         rendered=key
         status.setText(when(s.status) { WatchStatus.RUNNING->R.string.running; WatchStatus.PAUSED->R.string.paused; else->R.string.ready })
         status.background=card(if(s.status==WatchStatus.RUNNING)Palette.peach else Palette.mint,20)
         laps.removeAllViews()
+        lapTimers.clear()
         if (s.laps.isEmpty()) laps.addView(label(getString(R.string.lap_empty),13f,Palette.muted).apply { setPadding(0,0,0,dp(4)) })
         s.laps.asReversed().forEach { lap ->
             val row=LinearLayout(this).apply { gravity=Gravity.CENTER_VERTICAL; background=card(android.graphics.Color.WHITE,18); setPadding(dp(16),dp(12),dp(16),dp(12)) }
             row.addView(label("%02d".format(lap.number),15f,Palette.coral,true),LinearLayout.LayoutParams(0,-2,1f))
             row.addView(label("+"+WatchFormat.time(lap.splitMs),13f,Palette.muted),LinearLayout.LayoutParams(0,-2,2f))
             row.addView(label(WatchFormat.time(lap.totalMs),16f,Palette.ink,true))
-            laps.addView(row,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(7) })
+            val container = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                background = card(android.graphics.Color.WHITE,18)
+            }
+            container.addView(row)
+            val timer = label("",16f,Palette.ink,true).apply {
+                setPadding(dp(16),0,dp(16),dp(12))
+            }
+            container.addView(timer,LinearLayout.LayoutParams(-1,-2))
+            lapTimers.add(lap to timer)
+            laps.addView(container,LinearLayout.LayoutParams(-1,-2).apply { bottomMargin=dp(7) })
         }
+        updateLapTimers(face.elapsed)
     }
 
+    private fun updateLapTimers(elapsed: Long) {
+        lapTimers.forEach { (lap, view) ->
+            view.text = "기록 후 경과  " + WatchFormat.time((elapsed - lap.totalMs).coerceAtLeast(0L))
+        }
+    }
 }
